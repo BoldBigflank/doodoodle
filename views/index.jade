@@ -1,0 +1,59 @@
+extends layout
+
+block content
+    .container(ng-controller='GameCtrl')
+      //- The Players 
+      .row.center-block.players
+        .col-xs-3(ng-repeat='p in otherPlayers')
+          .panel.panel-default(ng-class="{ 'panel-success': game.players[game.turn] == otherPlayers[$index] }")
+            .panel-heading
+                | {{p.name}}
+                span.glyphicon.glyphicon-heart(ng-repeat='a in range(p.lives) track by $index')
+              .panel-body
+                .row
+                  div.col-xs-1(ng-repeat='card in p.hand track by $index')
+                    span.card
+      .row
+        .col-xs-8.col-xs-offset-2
+          .col-xs-4
+            .panel.panel-default.timer
+              .panel-heading
+                h2 Timer
+              .panel-body
+                h1 {{game.timer}}
+          .well.col-xs-8
+            .card.col-xs-3(ng-repeat='card in game.discard | limitTo: 3 track by $index')
+              .card-ace.club
+                .corner.top
+                  span.number(ng-if="card.length<3") {{card}}
+                  span.number(ng-if="card.length>=3") {{card.slice(0,1)}}
+                  span(ng-if='card.length>=4') {{card.slice(-1)}}
+                span.suit.middle_center {{card}}
+                .corner.bottom
+                  span.number {{card.slice(0,1)}}
+                  span(ng-if='card.length>=4') {{card.slice(-1)}}
+      //- Player Info/Hand 
+      nav.navbar.navbar-default.navbar-fixed-bottom(role='navigation')
+        .container.player
+          .row
+            .col-xs-8.col-xs-offset-2
+              .panel.panel-default(ng-class="{ 'panel-success': game.players[game.turn] == player } ")
+                .panel-heading
+                  | {{player.name}}
+                  | Lives:
+                  span.glyphicon.glyphicon-heart(ng-repeat='a in range(player.lives) track by $index')
+                .panel-body
+                  a.col-xs-1(href='#', ng-click='playCard($index)', ng-repeat='card in player.hand track by $index')
+                    span.card
+                      .card-ace.club
+                        .corner.top
+                          span.number(ng-if="card.length<3") {{card}}
+                          span.number(ng-if="card.length>=3") {{card.slice(0,1)}}
+                          span(ng-if='card.length>=4') {{card.slice(-1)}}
+                        span.suit.middle_center {{card}}
+                        .corner.bottom
+                          span.number {{card.slice(0,1)}}
+                          span(ng-if='card.length>=4') {{card.slice(-1)}}
+            .col-xs-2
+              a.btn.btn-primary.btn-block(ng-if='game.state == "prep"', href='', ng-click='startGame()') start
+block scripts

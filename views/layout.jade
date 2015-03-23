@@ -1,0 +1,16 @@
+doctype html
+html(ng-app="doodoodleApp")
+  head
+    title= title
+    script(src='/javascripts/angular.js')
+    script(src='/socket.io/socket.io.js')
+    script(src='/javascripts/doodoodle.js')
+    link(rel='stylesheet', href='/stylesheets/bootstrap.min.css')
+    link(rel='stylesheet', href='/stylesheets/bootstrap-theme.min.css')
+    link(rel='stylesheet', href='/stylesheets/style.css')
+    block stylesheets
+  body
+    block content
+    block scripts
+        script(src='/javascripts/jquery-2.1.1.min.js')
+        script(src='/javascripts/bootstrap.min.js')

@@ -1,0 +1,76 @@
+<html ng-app="boomioApp">
+<head>
+    <title>Boomio</title>
+    
+    <script src="/javascripts/angular.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/javascripts/boomio.js"></script>
+
+    <link rel="stylesheet" href="/stylesheets/bootstrap.min.css">
+    <link rel="stylesheet" href="/stylesheets/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="/stylesheets/style.css">
+
+    
+</head>
+<body>
+    <div class="container" ng-controller="GameCtrl">
+        <h1>Hello {{player.name}}</h1>
+        <!-- The Players -->
+        <div class="row center-block" >
+            <div class="col-md-2" ng-if="player.id != p.id " ng-repeat="p in game.players">
+                <div class="row">
+                    <div class="col-md-12">
+                        {{p.name}} <span class="glyphicon glyphicon-heart" ng-repeat="a in range(p.lives) track by $index"></span>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="card col-md-1" ng-repeat="card in p.hand track by $index">
+                            {{$index}}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <!-- The Game Area -->
+        <div class="row">
+            <div class="col-md-offset-3 col-md-2 well">
+                Deck
+            </div>
+            <div class="well col-md-2">
+                Discard
+            </div>
+            <div class="col-md-2">
+                Timer<br>{{game.timer}}
+            </div>
+
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <a href="" ng-click="startGame()" class="button">start</a>
+            </div>
+        </div>
+        <!-- Player Info/Hand -->
+        <nav class="navbar navbar-default navbar-fixed-bottom" role="navigation">
+          <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    {{player.name}}
+                </div>
+                <div class="col-md-6">
+                    Lives: <span class="glyphicon glyphicon-heart" ng-repeat="a in range(player.lives) track by $index"></span>
+                </div>
+                <div class="card col-md-1" ng-repeat="card in player.hand track by $index">
+                    <a href="#" ng-click="playCard($index)">
+                        <span>{{card}}</span>
+                    </a>
+                </div>
+            </div>
+          </div>
+        </nav>
+    </div>
+    <script src="/javascripts/jquery-2.1.1.min.js"></script>
+    <script src="/javascripts/bootstrap.min.js"></script>
+</body>
+</html>
+
+
