@@ -6,11 +6,13 @@ block content
     script.
       var isPlayer= #{isPlayer};
     .row.row-offcanvas.row-offcanvas-right
-        .col-xs-12.col-sm-9
+        .col-sm-12.col-md-9
           p.pull-right.visible-xs
             button.btn.btn-primary.btn-xs(type='button', data-toggle='offcanvas') Scores
           |           
           .jumbotron
+              canvas.drawing(drawing)
+              
               //- Set up as a host
               div(ng-if="!isPlayer")
                 h1 Doodoodle
@@ -38,16 +40,44 @@ block content
                 p
                   div.alert.alert-danger.error(ng-show="error") {{error}}
 
+              
               //- Set up is done, let's show controls for players
-              div.controls(ng-if="game && game.state")
-                h2 Controls
-                div.btn-group.btn-group-justified
-                  .btn-group(ng-repeat='c in game.state.controls', ng-click="control(c)")
-                    button.btn.btn-default {{ c }}
+              .controls(ng-if="game && game.state")
+              h2 Controls
+                .prep-buttons(ng-show="game.state.name == 'prep'", state="prep")
+                  | Prep buttons
+                  button.btn.btn-block.btn-default.text-uppercase(ng-click="action('start')",type='submit') Start
+                .header(ng-show="game.state.name == 'draw'", state="draw")
+                  | Draw
+                  canvas(drawing)
+                .draw(ng-show="game.state.name == 'vote'", state="vote")
+                  | Vote box
+                .draw-buttons(ng-show="game.state.name == 'result'", state="result")
+                  | Result buttons
+
+                  //- <tabs>
+                  //-       <pane title="Localization">
+                  //-         Date: {{ '2012-04-01' | date:'fullDate' }} <br>
+                  //-         Currency: {{ 123456 | currency }} <br>
+                  //-         Number: {{ 98765.4321 | number }} <br>
+                  //-       </pane>
+                  //-       <pane title="Pluralization">
+                  //-         <div ng-controller="BeerCounter">
+                  //-           <div ng-repeat="beerCount in beers">
+                  //-             <ng-pluralize count="beerCount" when="beerForms"></ng-pluralize>
+                  //-           </div>
+                  //-         </div>
+                  //-       </pane>
+                  //-     </tabs>
+
+                //- div.btn-group.btn-group-justified
+                //-   .btn-group(ng-attr-control="{{game.state.directive}}")
+                //-     div(ng-class="{{c}}")
+                //-     button.btn.btn-default() {{ c }}
 
                 
           .row
-            .col-xs-6.col-lg-4
+            .col-sm-6.col-lg-4
               h2 Heading
               |               
               p
@@ -55,7 +85,7 @@ block content
               |               
               p
                 a.btn.btn-default(href='#', role='button') View details &raquo;
-            .col-xs-6.col-lg-4
+            .col-sm-6.col-lg-4
               h2 Heading
               |               
               p
@@ -63,7 +93,7 @@ block content
               |               
               p
                 a.btn.btn-default(href='#', role='button') View details &raquo;
-            .col-xs-6.col-lg-4
+            .col-sm-6.col-lg-4
               h2 Heading
               |               
               p
@@ -71,7 +101,7 @@ block content
               |               
               p
                 a.btn.btn-default(href='#', role='button') View details &raquo;
-            .col-xs-6.col-lg-4
+            .col-sm-6.col-lg-4
               h2 Heading
               |               
               p
@@ -79,7 +109,7 @@ block content
               |               
               p
                 a.btn.btn-default(href='#', role='button') View details &raquo;
-            .col-xs-6.col-lg-4
+            .col-sm-6.col-lg-4
               h2 Heading
               |               
               p
@@ -87,7 +117,7 @@ block content
               |               
               p
                 a.btn.btn-default(href='#', role='button') View details &raquo;
-            .col-xs-6.col-lg-4
+            .col-sm-6.col-lg-4
               h2 Heading
               |               
               p
@@ -95,7 +125,7 @@ block content
               |               
               p
                 a.btn.btn-default(href='#', role='button') View details &raquo;
-        #sidebar.col-xs-6.col-sm-3.sidebar-offcanvas
+        #sidebar.col-sm-6.col-md-3.sidebar-offcanvas
           h2 Players
           .list-group
             a.list-group-item.active(ng-repeat='p in game.players') Player {{p.name}}

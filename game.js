@@ -17,10 +17,10 @@ var startTime = 60;
 var startLives = 5;
 
 var STATE = {
-  PREP : {value: 0, name: "Preparation", controls:["Start Now", "Quit"]},
-  DRAW: {value: 1, name: "Draw Phase", controls:["draw", "reset", "submit"]},
-  VOTE : {value: 2, name: "Vote Phase", controls:["vote1", "vote2"]},
-  RESULT: {value:3, name: "Results", controls:["next"]}
+  PREP :    { value: 0, name:"prep", title: "Preparation", controls:["prep-buttons"]},
+  DRAW:     { value: 1, name:"draw", title: "Draw Phase", controls:["draw", "reset", "submit"]},
+  VOTE :    { value: 2, name:"vote", title: "Vote Phase", controls:["vote1", "vote2"]},
+  RESULT:   { value: 3, name:"result", title: "Results", controls:["next"]}
 };
 
 
@@ -59,6 +59,10 @@ var newGame = function(host, cb){
     return game;
 };
 
+var getGame = function(room){
+    return _.find(games, function(game){ return game.room == room });
+}
+
 var newRound = function(game){
     // Deal everyone up to 7 cards
     for(var p in game.players){
@@ -68,24 +72,24 @@ var newRound = function(game){
     game.timer = startTime;
 };
 
-var nextPlayer = function(gameId){
-    var game = games[gameId];
-    console.log("game", game);
-    // Find the current player index
-    var currentPlayer = game.players[game.turn];
-    // var currentPlayer = _.findWhere(game.players, {id:game.turn});
-    var playerIndex = game.players.indexOf(currentPlayer);
-    for(var i = 0; i < game.players.length; i++){
-        game.turn = (game.turn + game.direction) % game.players.length;
-        while (game.turn < 0) game.turn += game.players.length; // How do I loop the number?
-        console.log("game.turn",game.turn);
-        if(game.players[game.turn].state == 'active') {
-            games[gameId] = game;
-            return;
-        }
-    }
+// var nextPlayer = function(gameId){
+//     var game = games[gameId];
+//     console.log("game", game);
+//     // Find the current player index
+//     var currentPlayer = game.players[game.turn];
+//     // var currentPlayer = _.findWhere(game.players, {id:game.turn});
+//     var playerIndex = game.players.indexOf(currentPlayer);
+//     for(var i = 0; i < game.players.length; i++){
+//         game.turn = (game.turn + game.direction) % game.players.length;
+//         while (game.turn < 0) game.turn += game.players.length; // How do I loop the number?
+//         console.log("game.turn",game.turn);
+//         if(game.players[game.turn].state == 'active') {
+//             games[gameId] = game;
+//             return;
+//         }
+//     }
     
-};
+// };
 
 exports.playerToGame = function(playerId, cb){
     console.log("playerToGame", playerId, playerToGame[playerId]);
@@ -112,7 +116,7 @@ exports.join = function(uuid, name, room, cb){
         return;
     }
     room = room.toUpperCase()
-    var game = _.find(games, function(game){ return game.room == room });
+    var game = getGame(room);
     if(typeof game == "undefined") {
         cb("Room " + room + " not found")
         // console.log("Room " + room + " not found, creating")
@@ -142,14 +146,14 @@ exports.join = function(uuid, name, room, cb){
     cb(null, game);
 };
 
-exports.start = function(gameId, cb){
-    var game = games[gameId];
+exports.start = function(room, cb){
+    var game = getGame(room);
     if(!game) return cb("game not found", null);
     // var activePlayers = _.find(game.players, function(player){(player.state=="active")});
     // if(!activePlayers || activePlayers.length < 2) return cb("Not enough players to start", null);
     if(game.players.length < 2) return cb("Not enough players to start", null);
     
-    game.state = 'active';
+    game.state = STATE.DRAW;
     for( var i in game.players){
         var player = game.players[i];
         if(player.state == 'active'){
@@ -160,8 +164,8 @@ exports.start = function(gameId, cb){
     cb(null, game);
 };
 
-exports.leave = function(gameId, uuid, cb){
-    var game = games[gameId];
+exports.leave = function(room, uuid, cb){
+    var game = getGame(room)
     if(!game) return;
     // Remove their player
     var player = _.findWith(game.players, {id:uuid});
@@ -184,8 +188,6 @@ exports.leave = function(gameId, uuid, cb){
     }
     // game.players = _.without(game.players, player)
 };
-
-exports.getGame = function(){ return game }
 
 exports.getScores = function(){
     return _.map(game.players, function(val, key){ return { id:val.id, name:val.name, score:val.score }; })

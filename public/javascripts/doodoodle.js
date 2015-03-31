@@ -1,13 +1,14 @@
 
 // Socket.io
-var socket = io.connect('http://localhost:3000');
+// var socket = io.connect('http://localhost:3000');
+var socket = io.connect('http://192.168.29.134:3000');
 console.log("id", socket);
 
 // Angular
-angular.module('doodoodleApp', [])
+angular.module('doodoodleApp', ['components'])
     .controller('GameCtrl', ['$scope', function($scope) {
         $scope.playerId = 0;
-        $scope.joinData = {}
+        $scope.joinData = {};
         $scope.isPlayer = isPlayer;
         $scope.playerName = "";
         $scope.room = "";
@@ -75,8 +76,17 @@ angular.module('doodoodleApp', [])
             });
         };
 
-        $scope.control = function(action){
-            console.log("Control action: " + action)
+        $scope.action = function(action){
+            $scope.processing = true;
+            console.log("Control action: " + action);
+            socket.emit(action, function(err, data){
+                if(err) console.log(err)
+                $scope.processing = false;
+            })
+        }
+
+        $scope.submitPicture = function(){
+
         }
 
         if(!$scope.isPlayer){
