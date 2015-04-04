@@ -11,6 +11,8 @@ block content
             button.btn.btn-primary.btn-xs(type='button', data-toggle='offcanvas') Scores
           
           .jumbotron
+            canvas.drawing(width=450, height=600, drawing, resize, ng-style="style()")
+            span#drawingText
             //- Set up as a host
             div(ng-if="!isPlayer")
               h1 Doodoodle
