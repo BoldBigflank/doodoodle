@@ -1,7 +1,7 @@
 
 // Socket.io
-var socket = io.connect('http://localhost:3000');
-// var socket = io.connect('http://192.168.29.134:3000');
+// var socket = io.connect('http://localhost:3000');
+var socket = io.connect('http://192.168.29.235:3000');
 console.log("id", socket);
 
 // Angular
