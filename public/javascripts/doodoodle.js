@@ -99,15 +99,12 @@ angular.module('doodoodleApp', [])
             $scope.loadGame(gameData);
         });
 
-        socket.on('drawing', function(drawingData){
-            console.log("drawingData received", drawingData);
-            // Draw the picture on the canvas, why not?
-        })
+        
     }])
     .directive("drawing", function ($document) {
       return {
         restrict: "A",
-        link: function ($scope, element, attrs, GameCtrl) {
+        link: function ($scope, element, attrs) {
           var canvas = element[0];
           var ctx = element[0].getContext('2d');
           $scope.linesArray = []; // An array of lines
@@ -130,15 +127,8 @@ angular.module('doodoodleApp', [])
             return coord;
           };
 
-          var start = function (event) {
-            // Mouse and touch input
-            var coord;
-            if (event.offsetX !== undefined) {
-              coord = canvasCoord({"x": event.offsetX, "y": event.offsetY});
-            } else { // Firefox compatibility
-              coord = canvasCoord({"x": event.layerX, "y": event.layerY });
-            }
-
+          // Drawing functions
+          var startLine = function(coord){
             // line style
             ctx.strokeStyle = "#df4b26";
             ctx.lineJoin = "round";
@@ -153,11 +143,33 @@ angular.module('doodoodleApp', [])
             ctx.stroke();
 
             ctx.moveTo(coord.x, coord.y);
-            drawing = true;
+          }
+
+          var drawLine = function(coord){
+            ctx.lineTo(coord.x, coord.y);
+            ctx.stroke();
+          }
+
+          var clearCanvas = function(){
+            ctx.clearRect ( 0 , 0 , canvas.width, canvas.height );
+            $scope.linesArray = [];
+            $scope.drawingData = "";
+          }
+
+          // Event functions
+          var start = function (event) {
+            // Mouse and touch input
+            var coord;
+            if (event.offsetX !== undefined) {
+              coord = canvasCoord({"x": event.offsetX, "y": event.offsetY});
+            } else { // Firefox compatibility
+              coord = canvasCoord({"x": event.layerX, "y": event.layerY });
+            }
+            startLine(coord);
 
             // start a new line for saving
             currentLine = [coord];
-
+            drawing = true;
           };
 
           var move = function (event) {
@@ -170,11 +182,9 @@ angular.module('doodoodleApp', [])
               } else {
                 coord = canvasCoord({"x": event.layerX, "y": event.layerY});
               }
-
-              ctx.lineTo(coord.x, coord.y);
-              ctx.stroke();
-
+              drawLine(coord);
               // Add to line for saving
+              // TODO: Only save when the distance is > 3px
               currentLine.push(coord);
             }
 
@@ -188,10 +198,10 @@ angular.module('doodoodleApp', [])
               $scope.drawingData = JSON.stringify($scope.linesArray);
               $scope.$digest();
             }
-
             // stop drawing
             drawing = false;
           };
+
 
           // *** Mouse Controls ***
           element.bind('mousedown', start);
@@ -203,6 +213,18 @@ angular.module('doodoodleApp', [])
           element.bind('touchmove', move);
           element.bind('touchend', end);
 
+          socket.on('drawing', function(drawingData){
+            clearCanvas();
+            // Draw the picture on the canvas, why not?
+            for (var x in drawingData){
+                var line = drawingData[x];
+                startLine(line[0]);
+                for (var y in line){
+                    var point = line[y];
+                    drawLine(point);
+                }
+            }
+          })
         }
       };
     })

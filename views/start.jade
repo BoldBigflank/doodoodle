@@ -48,7 +48,7 @@ block content
                 | Prep buttons
                 button.btn.btn-block.btn-default.text-uppercase(ng-click="action('start')",type='submit') Start
               .header(ng-show="game.state.name == 'draw'", state="draw")
-                | Draw
+                p Draw
                 canvas.drawing(width=450, height=600, drawing, resize, ng-style="style()")
                 button.btn.btn-block.btn-default.text-uppercase(ng-click="submitPicture()",type='submit') Submit
               .draw(ng-show="game.state.name == 'vote'", state="vote")
