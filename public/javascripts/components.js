@@ -1,8 +1,8 @@
-angular.module('components', [])
+angular.module('components', ['doodoodleApp'])
   .directive("drawing", function ($document) {
     return {
       restrict: "A",
-      link: function (scope, element) {
+      link: function (scope, element, attrs) {
         var canvas = element[0];
         var ctx = element[0].getContext('2d');
         var linesArray = []; // An array of lines

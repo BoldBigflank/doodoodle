@@ -91,6 +91,14 @@ io.on('connection', function (socket) {
 
     });
 
+    socket.on('drawing', function(data, cb){
+        console.log("drawing received", JSON.stringify(data))
+        var gameRoom = doodoodle.playerToGame(socket.id);
+        io.to(gameRoom).emit('drawing', data.drawingData)
+        
+
+    })
+
     // User Leaves
     socket.on('disconnect', function(){
         var gameRoom = doodoodle.playerToGame(socket.id);
