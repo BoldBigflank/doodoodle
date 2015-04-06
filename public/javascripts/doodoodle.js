@@ -229,7 +229,8 @@ angular.module('doodoodleApp', [])
       };
     })
     .directive('resize', function ($window) {
-      return function ($scope, element) {
+      return function ($scope, element, attrs) {
+        var scale = (attrs["scale"] !== undefined) ? attrs["scale"] : "1.0";
         $scope.$watch(function () {
           return { 'h': $window.innerHeight, 'w': $window.innerWidth };
         }, function (newValue, oldValue) {
@@ -237,10 +238,10 @@ angular.module('doodoodleApp', [])
           $scope.windowWidth = newValue.w;
 
           $scope.style = function () {
-            var newHeight = newValue.h - 100;
+            var newHeight = newValue.h * scale;
             return {
               'height': newHeight + 'px',
-              'width': (0.75 * newHeight) + 'px'
+              'width': (3/4 * newHeight) + 'px'
             };
           };
 

@@ -11,7 +11,7 @@ block content
             button.btn.btn-primary.btn-xs(type='button', data-toggle='offcanvas') Scores
           
           .jumbotron
-            //- canvas.drawing(width=450, height=600, drawing, resize, ng-style="style()")
+            //- canvas.drawing(width=450, height=600, drawing, resize, scale=0.5, ng-style="style()")
             span#drawingData {{drawingData}}
             //- Set up as a host
             div(ng-if="!isPlayer")
@@ -49,7 +49,7 @@ block content
                 button.btn.btn-block.btn-default.text-uppercase(ng-click="action('start')",type='submit') Start
               .header(ng-show="game.state.name == 'draw'", state="draw")
                 p Draw
-                canvas.drawing(width=450, height=600, drawing, resize, ng-style="style()")
+                canvas.drawing(width=450, height=600, drawing, resize, scale=0.75, ng-style="style()")
                 button.btn.btn-block.btn-default.text-uppercase(ng-click="submitPicture()",type='submit') Submit
               .draw(ng-show="game.state.name == 'vote'", state="vote")
                 | Vote box
