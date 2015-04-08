@@ -10,6 +10,13 @@ body {
 }
 body {
   /*padding-top: 70px;*/
+  background-color: #DDD;
+}
+.master {
+  background-color:white;
+  box-shadow: 0px 0px 4px #888888;
+  max-width: 1178px;
+  margin:  0 auto;
 }
 footer {
   padding: 30px 0;
@@ -31,6 +38,8 @@ canvas.drawing{
   -ms-user-select: none;
   user-select: none;
   cursor: pointer;
+  display: block;
+  margin: 5px auto;
 }
 
 /*

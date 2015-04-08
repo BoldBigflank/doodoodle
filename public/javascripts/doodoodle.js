@@ -83,7 +83,7 @@ angular.module('doodoodleApp', [])
         $scope.submitPicture = function(){
             var data = {}
             data.drawingData = $scope.linesArray;
-
+            console.log("sending", $scope.linesArray);
             socket.emit('drawing', data, function(err, game){
                 console.log(err, game);
 
@@ -214,6 +214,7 @@ angular.module('doodoodleApp', [])
           element.bind('touchend', end);
 
           socket.on('drawing', function(drawingData){
+            console.log("drawing received", drawingData)
             clearCanvas();
             // Draw the picture on the canvas, why not?
             for (var x in drawingData){

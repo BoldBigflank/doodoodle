@@ -11,7 +11,9 @@ html(ng-app="doodoodleApp")
     link(rel='stylesheet', href='/stylesheets/style.css')
     block stylesheets
   body
-    block content
+    .container-fluid.master
+        .col-lg-12
+            block content
     block scripts
         script(src='/javascripts/jquery-2.1.1.min.js')
         script(src='/javascripts/bootstrap.min.js')
