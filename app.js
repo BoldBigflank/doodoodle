@@ -94,7 +94,9 @@ io.on('connection', function (socket) {
     socket.on('drawing', function(data, cb){
         console.log("drawing received", JSON.stringify(data))
         var gameRoom = doodoodle.playerToGame(socket.id);
-        io.to(gameRoom).emit('drawing', data.drawingData);
+        doodoodle.saveDrawing(socket.id, gameRoom, data.drawingData, function(err, game){
+            io.to(gameRoom).emit('drawing', data.drawingData);
+        })
     })
 
     // User Leaves
@@ -106,23 +108,9 @@ io.on('connection', function (socket) {
         console.log("Player left", socket.id);
     });
 
-    // User chooses a name
-    socket.on('name', function(data, cb){
-        boomio.setName(socket.id, data.name, cb)
-    });
-
     socket.on('onHover', function(data){
         // Let the other players know what card they're hovering over
 
     })
-
-    // User plays a card
-    socket.on('playCard', function(data, cb){
-        console.log("playCard");
-        doodoodle.playCard(socket.id, data.card, function(err, game){
-            if(!err) io.to(game.id).emit('game', game);
-            cb(err);
-        });
-    });
 
 });

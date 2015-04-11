@@ -1,12 +1,54 @@
 
 // Socket.io
 // var socket = io.connect('http://localhost:3000');
-var socket = io.connect('http://192.168.29.235:3000');
-console.log("id", socket);
+// var socket = io.connect('http://192.168.29.235:3000');
 
 // Angular
-angular.module('doodoodleApp', [])
-    .controller('GameCtrl', ['$scope', function($scope) {
+var app = angular.module('doodoodleApp', [])
+
+app.factory('socket', function ($rootScope) {
+      // var socket = io.connect();
+      var socket = io.connect('http://localhost:3000');
+      // var socket = io.connect('http://192.168.29.235:3000');
+
+      return {
+        on: function (eventName, callback) {
+          socket.on(eventName, function () {  
+            var args = arguments;
+            callback.apply(socket, args);
+          });
+        },
+        emitData: function (eventName, data, callback) {
+          socket.emit(eventName, data, function () {
+            var args = arguments;
+            // $rootScope.$apply(function () {
+            //   if (callback) {
+            //     callback.apply(socket, args);
+            //   }
+            // });
+          })
+        },
+        emit: function (eventName, data, callback) {
+          if(typeof(callback) === 'function' ){
+            socket.emit(eventName, data, function () {
+              var args = arguments;
+              if (callback) {
+                callback.apply(socket, args);
+              }
+            })  
+          } else {
+            socket.emit(eventName, function () {
+              var args = arguments;
+              if (callback) {
+                callback.apply(socket, args);
+              }
+            })  
+          }
+        }
+      };
+    });
+
+app.controller('GameCtrl', function($scope, socket) {
         $scope.playerId = 0;
         $scope.joinData = {};
         $scope.isPlayer = isPlayer;
@@ -14,6 +56,7 @@ angular.module('doodoodleApp', [])
         $scope.room = "";
         $scope.error = null;
         $scope.drawingData = "drawingData";
+        $scope.currentSeed = []
 
         $scope.loadGame = function(gameData){
             $scope.game = gameData;
@@ -99,9 +142,15 @@ angular.module('doodoodleApp', [])
             $scope.loadGame(gameData);
         });
 
+        $scope.$on('$destroy', function (event) {
+            socket.removeAllListeners();
+            // or something like
+            // socket.removeListener(this);
+        });
         
-    }])
-    .directive("drawing", function ($document) {
+    });
+
+app.directive("drawing", function ($document, socket) {
       return {
         restrict: "A",
         link: function ($scope, element, attrs) {
@@ -216,6 +265,16 @@ angular.module('doodoodleApp', [])
           socket.on('drawing', function(drawingData){
             console.log("drawing received", drawingData)
             clearCanvas();
+            // Draw the seed
+            for (var x in $scope.player.seedLine){
+                var line = drawingData[x];
+                startLine(line[0]);
+                for (var y in line){
+                    var point = line[y];
+                    drawLine(point);
+                }
+            }
+
             // Draw the picture on the canvas, why not?
             for (var x in drawingData){
                 var line = drawingData[x];
@@ -228,8 +287,9 @@ angular.module('doodoodleApp', [])
           })
         }
       };
-    })
-    .directive('resize', function ($window) {
+    });
+
+app.directive('resize', function ($window) {
       return function ($scope, element, attrs) {
         var scale = (attrs["scale"] !== undefined) ? attrs["scale"] : "1.0";
         $scope.$watch(function () {

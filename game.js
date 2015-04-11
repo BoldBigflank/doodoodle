@@ -64,11 +64,14 @@ var getGame = function(room){
 }
 
 var newRound = function(game){
-    // Deal everyone up to 7 cards
+    // Give every active player a starting doodle
     for(var p in game.players){
         var player = game.players[p];
         // while(player.hand.length < startHand) drawCards(game, player, 1);
+        player.seedLine = [[{"x":"159.81","y":"124.37"},{"x":"159.81","y":"125.21"},{"x":"159.81","y":"183.19"},{"x":"159.81","y":"195.80"},{"x":"159.81","y":"209.24"},{"x":"159.81","y":"222.69"},{"x":"159.81","y":"242.02"},{"x":"159.81","y":"249.58"},{"x":"159.81","y":"262.18"},{"x":"159.81","y":"268.91"},{"x":"159.81","y":"273.11"},{"x":"159.81","y":"273.95"},{"x":"159.81","y":"276.47"},{"x":"159.81","y":"277.31"},{"x":"159.81","y":"278.99"},{"x":"159.81","y":"279.83"},{"x":"159.81","y":"280.67"},{"x":"160.65","y":"280.67"},{"x":"161.50","y":"280.67"},{"x":"161.50","y":"280.67"},{"x":"162.34","y":"280.67"},{"x":"163.18","y":"280.67"},{"x":"164.02","y":"280.67"},{"x":"164.02","y":"279.83"},{"x":"167.38","y":"279.83"},{"x":"171.59","y":"278.99"},{"x":"177.48","y":"278.99"},{"x":"183.36","y":"278.99"},{"x":"188.41","y":"278.99"},{"x":"190.93","y":"278.99"},{"x":"194.30","y":"278.99"},{"x":"198.50","y":"278.99"},{"x":"202.71","y":"278.99"},{"x":"206.07","y":"279.83"},{"x":"208.60","y":"282.35"},{"x":"211.12","y":"283.19"},{"x":"211.96","y":"283.19"},{"x":"211.96","y":"284.03"},{"x":"212.80","y":"284.03"},{"x":"212.80","y":"284.03"}]]
+
     }
+
     game.timer = startTime;
 };
 
@@ -129,16 +132,17 @@ exports.join = function(uuid, name, room, cb){
         var player = {
             id: uuid
             , name: name
-            , lives: startLives
             , state: 'active'
             , position:-1
             , score: 0
             , room: room
+            , seedLine:[]
+            , drawing:[]
         }
         // Take a hand of cards from the deck
         playerToGame[player.id] = game.room;
     }
-    if(_.where(game.players, {state:'active'}).length >= maxPlayers) player.state = 'spectating';
+    // if(_.where(game.players, {state:'active'}).length >= maxPlayers) player.state = 'spectating';
 
     players.push(player); // All players
     game.players.push(player); // Players for the game
@@ -154,15 +158,25 @@ exports.start = function(room, cb){
     if(game.players.length < 2) return cb("Not enough players to start", null);
     
     game.state = STATE.DRAW;
-    for( var i in game.players){
-        var player = game.players[i];
-        if(player.state == 'active'){
-            game.turn = parseInt(i);
-            break;
-        }
-    }
+    newRound(game);
+
+    // for( var i in game.players){
+    //     var player = game.players[i];
+    //     if(player.state == 'active'){
+    //         game.turn = parseInt(i);
+    //         break;
+    //     }
+    // }
     cb(null, game);
 };
+
+exports.saveDrawing = function(uuid, room, drawing, cb){
+    var game = getGame(room);
+    if(!game) return cb("game not found", null);
+    var player = _.findWhere( game.players, {id: uuid} )
+    if(!player) return cb("player not found", null);
+    player.drawing = drawing
+}
 
 exports.leave = function(room, uuid, cb){
     var game = getGame(room)
