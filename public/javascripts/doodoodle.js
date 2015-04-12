@@ -259,14 +259,23 @@ app.directive("drawing", function ($document, socket) {
           element.bind('touchmove', move);
           element.bind('touchend', end);
 
-          socket.on('drawing', function(data){
-            console.log("drawing received", drawingData)
-            if(position != data.position) return;
-            var drawingData = data.drawingData
+          $scope.votePicture = function(){
+              var data = {}
+              data.player = $scope.linesArray;
+              console.log("sending", $scope.linesArray);
+              socket.emit('vote', data, function(err, game){
+                  console.log(err, game);
+
+              });
+          }
+
+          socket.on('drawing', function(drawing){
+            console.log("drawing received", drawing)
+            if(position != drawing.position) return;
             clearCanvas();
-            // Draw the seed
-            for (var x in $scope.player.seedLine){
-                var line = drawingData[x];
+            // Draw the seed from the drawing
+            for (var x in drawing.seedLine){
+                var line = drawing.seedLine[x];
                 startLine(line[0]);
                 for (var y in line){
                     var point = line[y];
@@ -275,8 +284,8 @@ app.directive("drawing", function ($document, socket) {
             }
 
             // Draw the picture on the canvas, why not?
-            for (var x in drawingData){
-                var line = drawingData[x];
+            for (var x in drawing.lines){
+                var line = drawing.lines[x];
                 startLine(line[0]);
                 for (var y in line){
                     var point = line[y];

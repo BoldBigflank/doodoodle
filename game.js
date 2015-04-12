@@ -51,7 +51,7 @@ var newGame = function(host, cb){
         players:[],
         turn:null,
         direction:1,
-        state:STATE.VOTE,
+        state:STATE.PREP,
         room:newRoom(),
         host:host
     };
@@ -73,7 +73,8 @@ var newRound = function(game){
         var drawing = {
             player: player.id,
             seedLine: seedLine,
-            lines: [],
+            position: parseInt(p%2 + 1),
+            lines: null,
             votes:0
         }
         round.push(drawing)
@@ -90,25 +91,6 @@ var newSeedLine = function() {
     return debugSeed;
 
 }
-
-// var nextPlayer = function(gameId){
-//     var game = games[gameId];
-//     console.log("game", game);
-//     // Find the current player index
-//     var currentPlayer = game.players[game.turn];
-//     // var currentPlayer = _.findWhere(game.players, {id:game.turn});
-//     var playerIndex = game.players.indexOf(currentPlayer);
-//     for(var i = 0; i < game.players.length; i++){
-//         game.turn = (game.turn + game.direction) % game.players.length;
-//         while (game.turn < 0) game.turn += game.players.length; // How do I loop the number?
-//         console.log("game.turn",game.turn);
-//         if(game.players[game.turn].state == 'active') {
-//             games[gameId] = game;
-//             return;
-//         }
-//     }
-    
-// };
 
 exports.playerToGame = function(playerId, cb){
     console.log("playerToGame", playerId, playerToGame[playerId]);
@@ -152,8 +134,6 @@ exports.join = function(uuid, name, room, cb){
             , position:-1
             , score: 0
             , room: room
-            , seedLine:[]
-            , drawing:[]
         }
         // Take a hand of cards from the deck
         playerToGame[player.id] = game.room;
@@ -186,6 +166,14 @@ exports.saveDrawing = function(uuid, room, drawingData, cb){
     if(!player) return cb("player not found", null);
     var drawing = _.findWhere( game.round, {player: player.id})
     drawing.lines = drawingData
+    console.log("drawing saved")
+    // If it's the last drawing needed, go to Vote round
+    console.log(game.round)
+    
+    if (_.findWhere( game.round, {lines: null} ) === undefined) {
+        console.log("all drawings collected")
+        game.state = STATE.VOTE;
+    }
     cb(null, game)
 }
 
@@ -238,12 +226,6 @@ exports.getScoreboard = function(){
         , players: game.players.length
     }
 
-}
-
-exports.setName = function(id, name, cb){
-    var p = _.find(game.players, function(player){ return player.id == id })
-    if(p) p.name = name
-    cb(null, { players: game.players })
 }
 
 exports.reset = function(cb){
