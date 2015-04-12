@@ -12,21 +12,13 @@ app.factory('socket', function ($rootScope) {
       // var socket = io.connect('http://192.168.29.235:3000');
 
       return {
-        on: function (eventName, callback) {
+        on: function (eventName, data, callback) {
+          if(typeof(callback) === 'undefined') callback = data;
+
           socket.on(eventName, function () {  
             var args = arguments;
             callback.apply(socket, args);
           });
-        },
-        emitData: function (eventName, data, callback) {
-          socket.emit(eventName, data, function () {
-            var args = arguments;
-            // $rootScope.$apply(function () {
-            //   if (callback) {
-            //     callback.apply(socket, args);
-            //   }
-            // });
-          })
         },
         emit: function (eventName, data, callback) {
           if(typeof(callback) === 'function' ){
@@ -80,9 +72,8 @@ app.controller('GameCtrl', function($scope, socket) {
 
         $scope.startGame = function(){
             console.log("startGame");
-            socket.emit('start', function(err, game){
-                    console.log(err, game);
-
+            socket.emit('start', function(err){
+                    console.log(err);
             });
         };
 
@@ -160,6 +151,9 @@ app.directive("drawing", function ($document, socket) {
           var currentLine;
           // variable that decides if something should be drawn on mousemove
           var drawing = false;
+          var position = (attrs["position"] !== undefined) ? parseInt(attrs["position"]) : -1;
+          var editable = (position <= 0);
+          
 
           var canvasCoord = function (coord) {
             // Modify it based on its scale
@@ -207,6 +201,8 @@ app.directive("drawing", function ($document, socket) {
 
           // Event functions
           var start = function (event) {
+            console.log("Editable", editable)
+            if(!editable) return;
             // Mouse and touch input
             var coord;
             if (event.offsetX !== undefined) {
@@ -222,6 +218,7 @@ app.directive("drawing", function ($document, socket) {
           };
 
           var move = function (event) {
+            if(!editable) return;
             event.preventDefault();
             if (drawing) {
               var coord;
@@ -262,8 +259,10 @@ app.directive("drawing", function ($document, socket) {
           element.bind('touchmove', move);
           element.bind('touchend', end);
 
-          socket.on('drawing', function(drawingData){
+          socket.on('drawing', function(data){
             console.log("drawing received", drawingData)
+            if(position != data.position) return;
+            var drawingData = data.drawingData
             clearCanvas();
             // Draw the seed
             for (var x in $scope.player.seedLine){

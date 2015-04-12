@@ -84,9 +84,12 @@ io.on('connection', function (socket) {
         doodoodle.start(gameRoom, function(err, game){
             if(!err) {
                 console.log("Starting game", gameRoom);
+                // send the game in its new state
                 io.to(gameRoom).emit('game', game);
+                // Since it's a new round, send the round on the round channel
+                io.to(gameRoom).emit('round', game.round);
             }
-            return cb(err, game);
+            return cb(err);
         });
 
     });
@@ -95,7 +98,8 @@ io.on('connection', function (socket) {
         console.log("drawing received", JSON.stringify(data))
         var gameRoom = doodoodle.playerToGame(socket.id);
         doodoodle.saveDrawing(socket.id, gameRoom, data.drawingData, function(err, game){
-            io.to(gameRoom).emit('drawing', data.drawingData);
+            console.log("sending drawing back")
+            io.to(gameRoom).emit('drawing', data);
         })
     })
 

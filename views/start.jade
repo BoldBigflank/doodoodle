@@ -59,9 +59,11 @@ block content
                   div.alert.alert-danger.error(ng-show="error") {{error}}
               //- Game controls
               div.controls(ng-show="game && game.state")
+                //- Prep
                 .prep-buttons(ng-show="game.state.name == 'prep'", state="prep")
                   h3 When everyone is in, press Start
                   button.btn.btn-block.btn-default.text-uppercase(ng-click="action('start')",type='submit') Start
+                //- Draw
                 .header(ng-show="game.state.name == 'draw'", state="draw")
                   .progress
                     .progress-bar(role="progressbar")
@@ -70,8 +72,13 @@ block content
                     canvas.drawing(width=450, height=600, drawing, resize, scale=0.75, ng-style="style()")
                   button.btn.btn-block.btn-default.text-uppercase(ng-click="submitPicture()",type='submit') Submit
                   p {{linesArray}}
+                //- Vote
                 .draw(ng-show="game.state.name == 'vote'", state="vote")
-                  | Vote box
+                  .col-md-6
+                    canvas.drawing(width=450, height=600, drawing, resize, scale=0.4, position=1 ng-style="style()")
+                  .col-md-6
+                    canvas.drawing(width=450, height=600, drawing, resize, scale=0.4, position=2 ng-style="style()")
+                //- Result
                 .draw-buttons(ng-show="game.state.name == 'result'", state="result")
                   | Result buttons          
         #sidebar.col-sm-6.col-md-3.sidebar-offcanvas
