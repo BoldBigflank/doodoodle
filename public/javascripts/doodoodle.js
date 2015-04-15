@@ -114,7 +114,7 @@ app.controller('GameCtrl', function($scope, socket) {
             })
         }
 
-        $scope.submitPicture = function(){
+        $scope.submitPicture = function(linesArray){
             var data = {}
             data.drawingData = $scope.linesArray;
             console.log("sending", $scope.linesArray);
@@ -143,6 +143,7 @@ app.controller('GameCtrl', function($scope, socket) {
 
 app.directive("drawing", function ($document, socket) {
       return {
+        // template: "",
         restrict: "A",
         link: function ($scope, element, attrs) {
           var canvas = element[0];
@@ -191,6 +192,17 @@ app.directive("drawing", function ($document, socket) {
           var drawLine = function(coord){
             ctx.lineTo(coord.x, coord.y);
             ctx.stroke();
+          }
+
+          var draw = function(lines) {
+            for (var x in lines){
+                var line = lines[x];
+                startLine(line[0]);
+                for (var y in line){
+                    var point = line[y];
+                    drawLine(point);
+                }
+            }
           }
 
           var clearCanvas = function(){
@@ -269,19 +281,23 @@ app.directive("drawing", function ($document, socket) {
               });
           }
 
+          socket.on('game', function(gameData){
+            // We're going to add whatever data isn't in our current player drawing
+            console.log(io().id)
+            if(position !== -1) return; // Only update the main pic here
+            var drawing = _.findWhere(gameData.round, { player: io().id });
+            if(!drawing) return;
+            var newLines = _.without(drawing.seedLine, $scope.linesArray);
+            draw(newLines);
+
+          })
+
           socket.on('drawing', function(drawing){
             console.log("drawing received", drawing)
             if(position != drawing.position) return;
             clearCanvas();
             // Draw the seed from the drawing
-            for (var x in drawing.seedLine){
-                var line = drawing.seedLine[x];
-                startLine(line[0]);
-                for (var y in line){
-                    var point = line[y];
-                    drawLine(point);
-                }
-            }
+            draw(drawing.seedLine);
 
             // Draw the picture on the canvas, why not?
             for (var x in drawing.lines){

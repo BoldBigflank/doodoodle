@@ -50,7 +50,6 @@ var newGame = function(host, cb){
         discard:[],
         players:[],
         turn:null,
-        direction:1,
         state:STATE.PREP,
         room:newRoom(),
         host:host
