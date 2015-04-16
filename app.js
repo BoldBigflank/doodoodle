@@ -98,7 +98,17 @@ io.on('connection', function (socket) {
         console.log("drawing received", JSON.stringify(data))
         var gameRoom = doodoodle.playerToGame(socket.id);
         doodoodle.saveDrawing(socket.id, gameRoom, data.lines, function(err, game){
-            console.log("sending drawing back")
+            if(err) return cb(err);
+            console.log("sending drawing back");
+            io.to(gameRoom).emit('game', game);
+        })
+    })
+
+    socket.on('vote', function(data, cb){
+        console.log("vote received", JSON.stringify(data))
+        var gameRoom = doodoodle.playerToGame(socket.id);
+        doodoodle.vote(socket.id, gameRoom, data.votingRound, data.position, function(err, game){
+            if(err) return cb(err);
             io.to(gameRoom).emit('game', game);
         })
     })

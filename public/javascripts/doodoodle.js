@@ -266,6 +266,12 @@ app.directive("drawing", function ($document, socket) {
             isDrawing = false;
           };
 
+          var vote = function (event) {
+            socket.emit('vote', {"votingRound": $scope.game.votingRound, position: position}, function(err, game){
+              $scope.error = err;
+            })
+          }
+
 
           // *** Mouse Controls ***
           element.bind('mousedown', start);
@@ -277,11 +283,17 @@ app.directive("drawing", function ($document, socket) {
           element.bind('touchmove', move);
           element.bind('touchend', end);
 
+          // *** Vote Controls ***
+          if(position > 0){
+            element.bind('touchend', vote)
+            element.bind('mouseup', vote);
+          }
+
           scope.submitPicture = function(){
               console.log("sending", drawing);
               socket.emit('drawing', drawing, function(err, game){
                   console.log(err, game);
-
+                  $scope.error = err;
               });
           }
 

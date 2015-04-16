@@ -76,7 +76,7 @@ var newRound = function(game){
             position: parseInt(p%2 + 1),
             votingRound:parseInt(p/2),
             lines: null,
-            votes:0
+            votes: null
         }
         round.push(drawing)
     }
@@ -163,25 +163,46 @@ exports.start = function(room, cb){
 exports.saveDrawing = function(uuid, room, drawingData, cb){
     var game = getGame(room);
     if(!game) return cb("game not found", null);
-    var player = _.findWhere( game.players, {id: uuid} )
+    var player = _.findWhere( game.players, {id: uuid} );
     if(!player) return cb("player not found", null);
-    var drawing = _.findWhere( game.round, {player: player.id})
-    if(!drawing) { return cb("You are not a part of this round", null) };
-    drawing.lines = drawingData
-    console.log("drawing saved")
+    var drawing = _.findWhere( game.round, {player: player.id});
+    if(!drawing) { return cb("You are not a part of this round", null); }
+    drawing.lines = drawingData;
+    console.log("drawing saved");
     // If it's the last drawing needed, go to Vote round
-    console.log(game.round)
+    console.log(game.round);
     
     if (_.findWhere( game.round, {lines: null} ) === undefined) {
         console.log("all drawings collected");
         game.state = STATE.VOTE;
         game.votingRound = 0;
     }
-    cb(null, game)
-}
+    cb(null, game);
+};
+
+exports.vote = function(uuid, room, votingRound, position, cb){
+    var game = getGame(room);
+    if(!game) return cb("game not found", null);
+    if(game.votingRound != votingRound) return cb("Too late, wrong round");
+    var player = _.findWhere( game.players, {id: uuid} );
+    if(!player) return cb("player not found", null);
+    var drawingsThisRound = _.where(game.round, {votingRound:votingRound});
+    var hasVoted = _.find(drawingsThisRound, function(drawing){
+        return _.contains(drawing.votes, uuid);
+    });
+    if(hasVoted) return cb("You've already voted this round");
+    var drawing = _.findWhere(game.round, {votingRound:votingRound, position:position});
+    
+    // TODO: Check the other drawings for votes this round
+    if(drawing.votes == null) drawing.votes == [];
+    drawing.votes.push(uuid);
+    // Check here to move to the next voting round/Result phase
+
+    cb(null, game);
+};
 
 exports.leave = function(room, uuid, cb){
-    var game = getGame(room)
+    var game = getGame(room);
     if(!game) return;
     // Remove their player
     var player = _.findWith(game.players, {id:uuid});
