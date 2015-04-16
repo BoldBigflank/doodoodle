@@ -97,11 +97,9 @@ io.on('connection', function (socket) {
     socket.on('drawing', function(data, cb){
         console.log("drawing received", JSON.stringify(data))
         var gameRoom = doodoodle.playerToGame(socket.id);
-        doodoodle.saveDrawing(socket.id, gameRoom, data.drawingData, function(err, game){
+        doodoodle.saveDrawing(socket.id, gameRoom, data.lines, function(err, game){
             console.log("sending drawing back")
             io.to(gameRoom).emit('game', game);
-            var drawing = _.findWhere(game.round, {lines:drawingData})
-            io.to(gameRoom).emit('drawing', drawing);
         })
     })
 

@@ -17,10 +17,10 @@ var startTime = 60;
 var startLives = 5;
 
 var STATE = {
-  PREP :    { value: 0, name:"prep", title: "Preparation", controls:["prep-buttons"]},
-  DRAW:     { value: 1, name:"draw", title: "Draw Phase", controls:["draw", "reset", "submit"]},
-  VOTE :    { value: 2, name:"vote", title: "Vote Phase", controls:["vote1", "vote2"]},
-  RESULT:   { value: 3, name:"result", title: "Results", controls:["next"]}
+  PREP :    { value: 0, name:"prep",   title: "Preparation"},
+  DRAW:     { value: 1, name:"draw",   title: "Draw Phase" },
+  VOTE :    { value: 2, name:"vote",   title: "Vote Phase" },
+  RESULT:   { value: 3, name:"result", title: "Results"    }
 };
 
 
@@ -51,6 +51,7 @@ var newGame = function(host, cb){
         players:[],
         turn:null,
         state:STATE.PREP,
+        votingRound:-1,
         room:newRoom(),
         host:host
     };
@@ -65,14 +66,15 @@ var getGame = function(room){
 var newRound = function(game){
     var round = [] // An array of Drawing objects
     // Give every active player a starting doodle
-    var seedLine;
+    var drawingSeed;
     for(var p in game.players){
-        if(p%2 == 0) seedLine = newSeedLine(); // New seed line every other player
+        if(p%2 == 0) drawingSeed = newDrawingSeed(); // New seed line every other player
         var player = game.players[p];
         var drawing = {
             player: player.id,
-            seedLine: seedLine,
+            seed: drawingSeed,
             position: parseInt(p%2 + 1),
+            votingRound:parseInt(p/2),
             lines: null,
             votes:0
         }
@@ -82,7 +84,7 @@ var newRound = function(game){
     game.round = round;
 };
 
-var newSeedLine = function() {
+var newDrawingSeed = function() {
     // Take a line from a previous drawing or use one of some premade seeds
 
     var debugSeed = [[{"x":"159.81","y":"124.37"},{"x":"159.81","y":"125.21"},{"x":"159.81","y":"183.19"},{"x":"159.81","y":"195.80"},{"x":"159.81","y":"209.24"},{"x":"159.81","y":"222.69"},{"x":"159.81","y":"242.02"},{"x":"159.81","y":"249.58"},{"x":"159.81","y":"262.18"},{"x":"159.81","y":"268.91"},{"x":"159.81","y":"273.11"},{"x":"159.81","y":"273.95"},{"x":"159.81","y":"276.47"},{"x":"159.81","y":"277.31"},{"x":"159.81","y":"278.99"},{"x":"159.81","y":"279.83"},{"x":"159.81","y":"280.67"},{"x":"160.65","y":"280.67"},{"x":"161.50","y":"280.67"},{"x":"161.50","y":"280.67"},{"x":"162.34","y":"280.67"},{"x":"163.18","y":"280.67"},{"x":"164.02","y":"280.67"},{"x":"164.02","y":"279.83"},{"x":"167.38","y":"279.83"},{"x":"171.59","y":"278.99"},{"x":"177.48","y":"278.99"},{"x":"183.36","y":"278.99"},{"x":"188.41","y":"278.99"},{"x":"190.93","y":"278.99"},{"x":"194.30","y":"278.99"},{"x":"198.50","y":"278.99"},{"x":"202.71","y":"278.99"},{"x":"206.07","y":"279.83"},{"x":"208.60","y":"282.35"},{"x":"211.12","y":"283.19"},{"x":"211.96","y":"283.19"},{"x":"211.96","y":"284.03"},{"x":"212.80","y":"284.03"},{"x":"212.80","y":"284.03"}]]
@@ -164,14 +166,16 @@ exports.saveDrawing = function(uuid, room, drawingData, cb){
     var player = _.findWhere( game.players, {id: uuid} )
     if(!player) return cb("player not found", null);
     var drawing = _.findWhere( game.round, {player: player.id})
+    if(!drawing) { return cb("You are not a part of this round", null) };
     drawing.lines = drawingData
     console.log("drawing saved")
     // If it's the last drawing needed, go to Vote round
     console.log(game.round)
     
     if (_.findWhere( game.round, {lines: null} ) === undefined) {
-        console.log("all drawings collected")
+        console.log("all drawings collected");
         game.state = STATE.VOTE;
+        game.votingRound = 0;
     }
     cb(null, game)
 }

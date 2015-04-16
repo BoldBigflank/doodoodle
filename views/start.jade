@@ -69,15 +69,13 @@ block content
                     .progress-bar(role="progressbar")
                   h3.text-center Draw
                   .cols-sm-12
-                    canvas.drawing(width=450, height=600, drawing, resize, scale=0.75, ng-style="style()")
-                  button.btn.btn-block.btn-default.text-uppercase(ng-click="submitPicture()",type='submit') Submit
-                  p {{linesArray}}
+                    div(width=450, height=600, scale=0.75, drawing )
+                  //- button.btn.btn-block.btn-default.text-uppercase(ng-click="submitPicture()",type='submit') Submit
+                  //- p {{linesArray}}
                 //- Vote
                 .draw(ng-show="game.state.name == 'vote'", state="vote")
-                  .col-md-6
-                    canvas.drawing(width=450, height=600, drawing, resize, scale=0.4, position=1 ng-style="style()")
-                  .col-md-6
-                    canvas.drawing(width=450, height=600, drawing, resize, scale=0.4, position=2 ng-style="style()")
+                  .col-md-6(width=450, height=600, drawing, resize, scale=0.4, position=1)
+                  .col-md-6(width=450, height=600, drawing, resize, scale=0.4, position=2)
                 //- Result
                 .draw-buttons(ng-show="game.state.name == 'result'", state="result")
                   | Result buttons          

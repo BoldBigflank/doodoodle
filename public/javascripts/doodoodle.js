@@ -48,7 +48,6 @@ app.controller('GameCtrl', function($scope, socket) {
         $scope.room = "";
         $scope.error = null;
         $scope.drawingData = "drawingData";
-        $scope.currentSeed = []
 
         $scope.loadGame = function(gameData){
             $scope.game = gameData;
@@ -56,12 +55,6 @@ app.controller('GameCtrl', function($scope, socket) {
             for( var x in $scope.game.players){
                 p = $scope.game.players[x];
             }
-            $scope.$digest();
-        };
-
-        $scope.loadPlayer = function(playerData){
-            $scope.player = playerData;
-            console.log("Player is now", $scope.player);
             $scope.$digest();
         };
     
@@ -84,7 +77,6 @@ app.controller('GameCtrl', function($scope, socket) {
                 console.log("host", data);
                 // $scope.playerId = data.player.id;
                 $scope.loadGame(data.game);
-                // $scope.loadPlayer(data.player);
             });
         };
 
@@ -114,16 +106,6 @@ app.controller('GameCtrl', function($scope, socket) {
             })
         }
 
-        $scope.submitPicture = function(linesArray){
-            var data = {}
-            data.drawingData = $scope.linesArray;
-            console.log("sending", $scope.linesArray);
-            socket.emit('drawing', data, function(err, game){
-                console.log(err, game);
-
-            });
-        }
-
         if(!$scope.isPlayer){
             $scope.startHost();
         }
@@ -143,17 +125,39 @@ app.controller('GameCtrl', function($scope, socket) {
 
 app.directive("drawing", function ($document, socket) {
       return {
-        // template: "",
+        template: "<canvas width={{width}}px height={{height}}px scale={{scale}} resize ng-style='style()' class='drawing'></canvas>" +
+          "<button ng-show='{{position}} <= 0' class='btn btn-block btn-default text-uppercase' ng-click='submitPicture()' type='submit'>SubmitAlex</button>",
         restrict: "A",
-        link: function ($scope, element, attrs) {
-          var canvas = element[0];
-          var ctx = element[0].getContext('2d');
-          $scope.linesArray = []; // An array of lines
-          var currentLine;
-          // variable that decides if something should be drawn on mousemove
-          var drawing = false;
+        scope: {
+          "scale":"=scale",
+          "width":"=width",
+          "height":"=height",
+          "position":"=position"
+        },
+        link: function (scope, element, attrs) {
+          // The canvas
+          console.log("element", element)
+          var canvas = element[0].firstChild;
+          var ctx = element[0].firstChild.getContext('2d');
+
+          // The stored lines
+          var drawing = {
+            lines: null,
+            seed: [],
+            player: -1,
+            position: -1,
+            votingRound:-1,
+            votes:0
+          }
+          // var lines;
+          // var seed;
+          // $scope.linesArray = []; // Player's drawing in global scope to be submitted
+          // var votingRound = -1;
+
+          // Drawing variables
           var position = (attrs["position"] !== undefined) ? parseInt(attrs["position"]) : -1;
           var editable = (position <= 0);
+          var isDrawing = false;
           
 
           var canvasCoord = function (coord) {
@@ -207,13 +211,14 @@ app.directive("drawing", function ($document, socket) {
 
           var clearCanvas = function(){
             ctx.clearRect ( 0 , 0 , canvas.width, canvas.height );
-            $scope.linesArray = [];
-            $scope.drawingData = "";
+            drawing.lines = [];
+            drawing.seed = [];
+            // $scope.linesArray = [];
+            // $scope.drawingData = "";
           }
 
           // Event functions
           var start = function (event) {
-            console.log("Editable", editable)
             if(!editable) return;
             // Mouse and touch input
             var coord;
@@ -226,13 +231,13 @@ app.directive("drawing", function ($document, socket) {
 
             // start a new line for saving
             currentLine = [coord];
-            drawing = true;
+            isDrawing = true;
           };
 
           var move = function (event) {
             if(!editable) return;
             event.preventDefault();
-            if (drawing) {
+            if (isDrawing) {
               var coord;
               // get current mouse position
               if (event.offsetX !== undefined) {
@@ -249,15 +254,16 @@ app.directive("drawing", function ($document, socket) {
           };
 
           var end = function (event) {
-            if (drawing) {
+            if (isDrawing) {
               // Push the line for saving
-              $scope.linesArray.push(currentLine);
+              // $scope.linesArray.push(currentLine);
+              if(!drawing.lines) drawing.lines = [];
+              drawing.lines.push(currentLine);
               // console.log(JSON.stringify(linesArray));
-              $scope.drawingData = JSON.stringify($scope.linesArray);
-              $scope.$digest();
+              // $scope.$digest();
             }
             // stop drawing
-            drawing = false;
+            isDrawing = false;
           };
 
 
@@ -271,44 +277,56 @@ app.directive("drawing", function ($document, socket) {
           element.bind('touchmove', move);
           element.bind('touchend', end);
 
-          $scope.votePicture = function(){
-              var data = {}
-              data.player = $scope.linesArray;
-              console.log("sending", $scope.linesArray);
-              socket.emit('vote', data, function(err, game){
+          scope.submitPicture = function(){
+              console.log("sending", drawing);
+              socket.emit('drawing', drawing, function(err, game){
                   console.log(err, game);
 
               });
           }
 
+          scope.votePicture = function(){
+              var data = {};
+              // data.player = $scope.linesArray;
+              console.log("sending", $scope.linesArray);
+              socket.emit('vote', data, function(err, game){
+                  console.log(err, game);
+
+              });
+          };
+
           socket.on('game', function(gameData){
-            // We're going to add whatever data isn't in our current player drawing
-            console.log(io().id)
-            if(position !== -1) return; // Only update the main pic here
-            var drawing = _.findWhere(gameData.round, { player: io().id });
-            if(!drawing) return;
-            var newLines = _.without(drawing.seedLine, $scope.linesArray);
-            draw(newLines);
+            var gameDrawing = null;
+            // Update the player seed
+            if(position == -1){
+              console.log("Updating the main drawing")
+              gameDrawing = _.findWhere(gameData.round, { player: io().id });
+              if(!gameDrawing) return;
 
-          })
+              var newLines = _.without(gameDrawing.seed, drawing.seed);
+              if(newLines) {
+                draw(newLines);
+                drawing.seed = gameDrawing.seed;
+              }
 
-          socket.on('drawing', function(drawing){
-            console.log("drawing received", drawing)
-            if(position != drawing.position) return;
-            clearCanvas();
-            // Draw the seed from the drawing
-            draw(drawing.seedLine);
-
-            // Draw the picture on the canvas, why not?
-            for (var x in drawing.lines){
-                var line = drawing.lines[x];
-                startLine(line[0]);
-                for (var y in line){
-                    var point = line[y];
-                    drawLine(point);
-                }
+              drawing = gameDrawing;
             }
-          })
+            
+            // Draw the pictures to be voted on
+            else if(gameData.state.name == "vote"){
+              if(gameData.votingRound != drawing.votingRound){ // Voting round has changed
+                votingRound = gameData.votingRound;
+                gameDrawing = _.findWhere(gameData.round, { position: position, votingRound: votingRound });
+                if(!gameDrawing) return;
+                clearCanvas();
+                draw(gameDrawing.seed);
+                draw(gameDrawing.lines);
+                drawing = gameDrawing;
+              }
+            }
+
+
+          });
         }
       };
     });
