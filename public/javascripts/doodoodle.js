@@ -128,6 +128,7 @@ app.directive("drawing", function ($document, socket) {
         template: "<canvas width={{width}}px height={{height}}px scale={{scale}} resize ng-style='style()' class='drawing'></canvas>" +
           "<button ng-show='{{position}} <= 0' class='btn btn-block btn-default text-uppercase' ng-click='submitPicture()' type='submit'>SubmitAlex</button>",
         restrict: "A",
+        transclude: true,
         scope: {
           "scale":"=scale",
           "width":"=width",
@@ -135,6 +136,7 @@ app.directive("drawing", function ($document, socket) {
           "position":"=position"
         },
         link: function (scope, element, attrs) {
+          if(!position) position = -1;
           // The canvas
           console.log("element", element)
           var canvas = element[0].firstChild;
@@ -147,7 +149,7 @@ app.directive("drawing", function ($document, socket) {
             player: -1,
             position: -1,
             votingRound:-1,
-            votes:0
+            votes:null
           }
           // var lines;
           // var seed;
@@ -213,8 +215,6 @@ app.directive("drawing", function ($document, socket) {
             ctx.clearRect ( 0 , 0 , canvas.width, canvas.height );
             drawing.lines = [];
             drawing.seed = [];
-            // $scope.linesArray = [];
-            // $scope.drawingData = "";
           }
 
           // Event functions
@@ -267,40 +267,40 @@ app.directive("drawing", function ($document, socket) {
           };
 
           var vote = function (event) {
-            socket.emit('vote', {"votingRound": $scope.game.votingRound, position: position}, function(err, game){
-              $scope.error = err;
+            socket.emit('vote', {"votingRound": drawing.votingRound, position: drawing.position}, function(err, game){
+              scope.error = err;
             })
           }
 
 
           // *** Mouse Controls ***
-          element.bind('mousedown', start);
-          element.bind('mousemove', move);
+          canvas.addEventListener('mousedown', start);
+          canvas.addEventListener('mousemove', move);
           $document.bind('mouseup', end);
 
           // *** Touch Controls ***
-          element.bind('touchstart', start);
-          element.bind('touchmove', move);
-          element.bind('touchend', end);
+          canvas.addEventListener('touchstart', start);
+          canvas.addEventListener('touchmove', move);
+          canvas.addEventListener('touchend', end);
 
           // *** Vote Controls ***
           if(position > 0){
-            element.bind('touchend', vote)
-            element.bind('mouseup', vote);
+            canvas.addEventListener('touchend', vote)
+            canvas.addEventListener('mouseup', vote);
           }
 
           scope.submitPicture = function(){
               console.log("sending", drawing);
               socket.emit('drawing', drawing, function(err, game){
                   console.log(err, game);
-                  $scope.error = err;
+                  scope.error = err;
               });
           }
 
           scope.votePicture = function(){
               var data = {};
               // data.player = $scope.linesArray;
-              console.log("sending", $scope.linesArray);
+              console.log("sending", scope.linesArray);
               socket.emit('vote', data, function(err, game){
                   console.log(err, game);
 
@@ -321,7 +321,14 @@ app.directive("drawing", function ($document, socket) {
                 drawing.seed = gameDrawing.seed;
               }
 
-              drawing = gameDrawing;
+              // drawing.lines = gameDrawing.lines; // Don't replace the player's work
+              drawing.seed = gameDrawing.seed;
+              drawing.player = gameDrawing.player;
+              drawing.position = gameDrawing.position;
+              drawing.votingRound = gameDrawing.votingRound;
+              drawing.votes = gameDrawing.votes;
+            
+              // drawing = gameDrawing;
             }
             
             // Draw the pictures to be voted on

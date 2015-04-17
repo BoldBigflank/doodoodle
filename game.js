@@ -194,7 +194,7 @@ exports.vote = function(uuid, room, votingRound, position, cb){
     var drawing = _.findWhere(game.round, {votingRound:votingRound, position:position});
     
     // TODO: Check the other drawings for votes this round
-    if(drawing.votes == null) drawing.votes == [];
+    if(drawing.votes == null) drawing.votes = [drawing.player];
     drawing.votes.push(uuid);
     // Check here to move to the next voting round/Result phase
 

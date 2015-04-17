@@ -55,8 +55,6 @@ block content
                   input#inputRoom.form-control(ng-model="joinData.room", type='text', placeholder='XXXX', required, ng-minlength=4, ng-maxlength=4, ng-patterh="[A-Z]", maxlength=4)
                   p {{room}}
                 button.btn.btn-block.btn-default.text-uppercase(ng-click="startPlayer()",type='submit', ng-disabled="playerForm.$invalid") Go
-                p
-                  div.alert.alert-danger.error(ng-show="error") {{error}}
               //- Game controls
               div.controls(ng-show="game && game.state")
                 //- Prep
@@ -69,7 +67,7 @@ block content
                     .progress-bar(role="progressbar")
                   h3.text-center Draw
                   .cols-sm-12
-                    div(width=450, height=600, scale=0.75, drawing )
+                    div(width=450, height=600, scale=0.75, position=-1, drawing )
                   //- button.btn.btn-block.btn-default.text-uppercase(ng-click="submitPicture()",type='submit') Submit
                   //- p {{linesArray}}
                 //- Vote
@@ -79,6 +77,8 @@ block content
                 //- Result
                 .draw-buttons(ng-show="game.state.name == 'result'", state="result")
                   | Result buttons          
+            p
+              div.alert.alert-danger.error(ng-show="error") {{error}}
         #sidebar.col-sm-6.col-md-3.sidebar-offcanvas
           h2 Players
           .list-group
