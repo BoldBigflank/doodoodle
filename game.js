@@ -76,7 +76,7 @@ var newRound = function(game){
             position: parseInt(p%2 + 1),
             votingRound:parseInt(p/2),
             lines: null,
-            votes: null
+            votes: [player.id]
         }
         round.push(drawing)
     }
