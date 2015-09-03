@@ -1,12 +1,12 @@
-var _ = require('underscore')
-  , fs = require('fs')
+var _ = require('underscore'),
+  fs = require('fs');
 var EventEmitter = require('events').EventEmitter;
 
 exports.eventEmitter = new EventEmitter();
 
 
-var games=[];
-var rooms=[];
+var games = [];
+var rooms = [];
 var players = [];
 var playerToGame = {};
 
@@ -17,33 +17,33 @@ var startTime = 60;
 var startLives = 5;
 
 var STATE = {
-  PREP :    { value: 0, name:"prep",   title: "Preparation"},
-  DRAW:     { value: 1, name:"draw",   title: "Draw Phase" },
-  VOTE :    { value: 2, name:"vote",   title: "Vote Phase" },
-  RESULT:   { value: 3, name:"result", title: "Results"    }
+  PREP :    { value: 0, name: "prep",   title: "Preparation"},
+  DRAW:     { value: 1, name: "draw",   title: "Draw Phase" },
+  VOTE :    { value: 2, name: "vote",   title: "Vote Phase" },
+  RESULT:   { value: 3, name: "result", title: "Results"    }
 };
 
 
 
-var newRoom = function(){
-    roomString = "";
+var newRoom = function () {
+    var roomString = "";
     // 
-    validCharacters = "BCDFGHJKLMNPQRSTVWXYZ";
+    var validCharacters = "BCDFGHJKLMNPQRSTVWXYZ";
     // Get four random
-    while(roomString.length < 4){
+    while (roomString.length < 4) {
         roomString += validCharacters.substr(Math.floor(Math.random()*validCharacters.length), 1);
     }
     return roomString;
 };
 
-var init = function(cb){
-    fs.readFile('names.txt', function(err, data) {
-        if(err) throw err;
+var init = function (cb) {
+    fs.readFile('names.txt', function (err, data) {
+        if (err) throw err;
         names = data.toString().split("\n");
     });
 };
 
-var newGame = function(host, cb){
+var newGame = function (host, cb) {
     var game = {
         id:games.length,
         timer:startTime,
@@ -59,17 +59,60 @@ var newGame = function(host, cb){
     return game;
 };
 
-var getGame = function(room){
+var getGame = function (room) {
     return _.find(games, function(game){ return game.room == room });
 }
 
-var newRound = function(game){
+var getNeighborId = function (game, playerId) {
+    // Find index of player
+    // Iterate through players,
+        // return id of next active player
+}
+
+var newRound = function (game) {
     var round = [] // An array of Drawing objects
     // Give every active player a starting doodle
+
+    // Double the number of active players
+    // ie. 5 players, 10 entries, 5 seeds
+    // Assign seed to player?
+    // (1,2),(3,4),(1,4),(2,3)
+    // (1,2),(3,4),(5,1),(2,3),(4,5)
+
+    // For every active person in the players
+    var votingRound = 0;
+    for(var p in game.players){
+        var player = game.players[p];
+        if (player.state != "active") continue;
+        partnerId = getNeighborId(game, player.id);
+        // Create a seed
+        drawingSeed = newDrawingSeed();
+        var drawing = {
+            player: player.id,
+            seed: drawingSeed,
+            position: 1,
+            votingRound: votingRound,
+            lines: null,
+            votes: [player.id]
+        }
+
+        var drawing2 = {
+            player: partnerId,
+            seed: drawingSeed,
+            position: 2,
+            votingRound: votingRound,
+            lines: null,
+            votes: [player.id]
+        }
+
+        votingRound++;
+    }
+
     var drawingSeed;
     for(var p in game.players){
-        if(p%2 == 0) drawingSeed = newDrawingSeed(); // New seed line every other player
         var player = game.players[p];
+        if(player.state != "active") continue;
+        if(p%2 == 0) drawingSeed = newDrawingSeed(); // New seed line every other player
         var drawing = {
             player: player.id,
             seed: drawingSeed,
@@ -168,7 +211,7 @@ exports.saveDrawing = function(uuid, room, drawingData, cb){
     var drawing = _.findWhere( game.round, {player: player.id});
     if(!drawing) { return cb("You are not a part of this round", null); }
     drawing.lines = drawingData;
-    drawing.votes = [drawing.player];
+    // drawing.votes = [drawing.player];
     console.log("drawing saved");
     // If it's the last drawing needed, go to Vote round
     console.log(game.round);
@@ -191,6 +234,7 @@ exports.vote = function(uuid, room, votingRound, position, cb){
     var hasVoted = _.find(drawingsThisRound, function(drawing){
         return _.contains(drawing.votes, uuid);
     });
+    console.log("hasVoted", hasVoted);
     if(hasVoted === undefined) return cb("You've already voted this round");
     var drawing = _.findWhere(game.round, {votingRound:votingRound, position:position});
     
