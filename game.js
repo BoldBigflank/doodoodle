@@ -60,33 +60,23 @@ var newGame = function (host, cb) {
 };
 
 var getGame = function (room) {
-    return _.find(games, function(game){ return game.room == room });
-}
+    return _.find(games, function(game){ return game.room == room; });
+};
 
-var getNeighborId = function (game, playerId) {
-    // Find index of player
-    // Iterate through players,
-        // return id of next active player
-}
 
 var newRound = function (game) {
-    var round = [] // An array of Drawing objects
-    // Give every active player a starting doodle
+    var round = []; // An array of Drawing objects
+    // Give every active player two starting doodles
 
-    // Double the number of active players
-    // ie. 5 players, 10 entries, 5 seeds
-    // Assign seed to player?
-    // (1,2),(3,4),(1,4),(2,3)
-    // (1,2),(3,4),(5,1),(2,3),(4,5)
+    var activePlayers = _.where(game.players, {state: "active"});
+    activePlayers = _.shuffle(activePlayers); // Randomize pairings
 
     // For every active person in the players
     var votingRound = 0;
-    for(var p in game.players){
-        var player = game.players[p];
-        if (player.state != "active") continue;
-        partnerId = getNeighborId(game, player.id);
-        // Create a seed
+    for(var p in activePlayers){
+        var player = activePlayers[p];
         drawingSeed = newDrawingSeed();
+
         var drawing = {
             player: player.id,
             seed: drawingSeed,
@@ -94,8 +84,10 @@ var newRound = function (game) {
             votingRound: votingRound,
             lines: null,
             votes: [player.id]
-        }
+        };
+        round.push(drawing);
 
+        partnerId = activePlayers[(p+1) % activePlayers.length ].id;
         var drawing2 = {
             player: partnerId,
             seed: drawingSeed,
@@ -103,27 +95,11 @@ var newRound = function (game) {
             votingRound: votingRound,
             lines: null,
             votes: [player.id]
-        }
+        };
+        round.push(drawing);
 
         votingRound++;
     }
-
-    var drawingSeed;
-    for(var p in game.players){
-        var player = game.players[p];
-        if(player.state != "active") continue;
-        if(p%2 == 0) drawingSeed = newDrawingSeed(); // New seed line every other player
-        var drawing = {
-            player: player.id,
-            seed: drawingSeed,
-            position: parseInt(p%2 + 1),
-            votingRound:parseInt(p/2),
-            lines: null,
-            votes: [player.id]
-        }
-        round.push(drawing)
-    }
-
     game.round = round;
 };
 
