@@ -41,7 +41,7 @@ block content
             //- Player Controls
             div.row(ng-show="isPlayer")
               //- Pre-Game setup
-              form(ng-show="!game", name="playerForm")
+              form(ng-class="game-panel", ng-show="!game", name="playerForm")
                 h1 Doodoodle
                 h2 Join a game here
                 a(href="/host")
@@ -58,11 +58,11 @@ block content
               //- Game controls
               div.controls(ng-show="game && game.state")
                 //- Prep
-                .prep-buttons(ng-show="game.state.name == 'prep'", state="prep")
+                .prep-buttons(ng-class="game-panel", ng-show="game.state.name == 'prep'", state="prep")
                   h3 When everyone is in, press Start
                   button.btn.btn-block.btn-default.text-uppercase(ng-click="action('start')",type='submit') Start
                 //- Draw
-                .header(ng-show="game.state.name == 'draw'", state="draw")
+                .header(ng-class="game-panel", ng-show="game.state.name == 'draw'", state="draw")
                   .progress
                     .progress-bar(role="progressbar")
                   h3.text-center Draw
@@ -71,12 +71,12 @@ block content
                   //- button.btn.btn-block.btn-default.text-uppercase(ng-click="submitPicture()",type='submit') Submit
                   //- p {{linesArray}}
                 //- Vote
-                h3 Pick your favorite
-                .draw(ng-show="game.state.name == 'vote'", state="vote")
+                .draw(ng-class="game-panel", ng-show="game.state.name == 'vote'", state="vote")
+                  h3 Pick your favorite
                   .col-md-6(width=450, height=600, drawing, resize, scale=0.4, position=1)
                   .col-md-6(width=450, height=600, drawing, resize, scale=0.4, position=2)
                 //- Result
-                .draw-buttons(ng-show="game.state.name == 'result'", state="result")
+                .draw-buttons(ng-class="game-panel", ng-show="game.state.name == 'result'", state="result")
                   | Result buttons          
             p
               div.alert.alert-danger.error(ng-show="error") {{error}}

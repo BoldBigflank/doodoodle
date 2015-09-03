@@ -168,6 +168,7 @@ exports.saveDrawing = function(uuid, room, drawingData, cb){
     var drawing = _.findWhere( game.round, {player: player.id});
     if(!drawing) { return cb("You are not a part of this round", null); }
     drawing.lines = drawingData;
+    drawing.votes = [drawing.player];
     console.log("drawing saved");
     // If it's the last drawing needed, go to Vote round
     console.log(game.round);
@@ -190,13 +191,22 @@ exports.vote = function(uuid, room, votingRound, position, cb){
     var hasVoted = _.find(drawingsThisRound, function(drawing){
         return _.contains(drawing.votes, uuid);
     });
-    if(hasVoted) return cb("You've already voted this round");
+    if(hasVoted === undefined) return cb("You've already voted this round");
     var drawing = _.findWhere(game.round, {votingRound:votingRound, position:position});
     
     // TODO: Check the other drawings for votes this round
-    if(drawing.votes == null) drawing.votes = [drawing.player];
+    if(drawing.votes === null) drawing.votes = [drawing.player];
     drawing.votes.push(uuid);
     // Check here to move to the next voting round/Result phase
+    var allVotes = _.flatten(_.pluck(drawingsThisRound, 'votes'));
+    console.log("all votes", allVotes);
+
+    // If there are no active players not in the allVotes list, continut
+
+    var votingInProgress = 0; // UPDATE THIS
+    
+    console.log("votingInProgress", votingInProgress);
+    if(votingInProgress === undefined) game.state = STATE.RESULT;
 
     cb(null, game);
 };
