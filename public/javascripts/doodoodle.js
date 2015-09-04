@@ -101,10 +101,10 @@ app.controller('GameCtrl', function($scope, socket) {
         $scope.action = function(action){
             $scope.processing = true;
             console.log("Control action: " + action);
-            socket.emit(action, function(err){
+            socket.emit(action, {}, function(err){
                 console.log("Returned", err);
                 if(err) console.log(err);
-                if(err) $scope.error = err;
+                $scope.error = err;
                 $scope.processing = false;
             });
         };

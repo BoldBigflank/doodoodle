@@ -77,7 +77,7 @@ io.on('connection', function (socket) {
     });
 
     // Player calls to start the game
-    socket.on('start', function(cb){
+    socket.on('start', function(data, cb){
         var gameRoom = doodoodle.playerToGame(socket.id);
         doodoodle.start(gameRoom, function(err, game){
             console.log(err, game);
@@ -95,7 +95,7 @@ io.on('connection', function (socket) {
 
     socket.on('drawing', function(data, cb){
         var gameRoom = doodoodle.playerToGame(socket.id);
-        doodoodle.saveDrawing(socket.id, gameRoom, data.lines, function(err, game){
+        doodoodle.saveDrawing(socket.id, gameRoom, data, function(err, game){
             if(err) return cb(err);
             console.log(gameRoom, "--> Drawing", socket.id);
             io.to(gameRoom).emit('game', game);
