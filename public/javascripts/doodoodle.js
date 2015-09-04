@@ -66,7 +66,8 @@ app.controller('GameCtrl', function($scope, socket) {
         $scope.startGame = function(){
             console.log("startGame");
             socket.emit('start', function(err){
-                    console.log(err);
+                console.log(err);
+                $scope.error = err;
             });
         };
 
@@ -100,11 +101,13 @@ app.controller('GameCtrl', function($scope, socket) {
         $scope.action = function(action){
             $scope.processing = true;
             console.log("Control action: " + action);
-            socket.emit(action, function(err, data){
-                if(err) console.log(err)
+            socket.emit(action, function(err){
+                console.log("Returned", err);
+                if(err) console.log(err);
+                if(err) $scope.error = err;
                 $scope.processing = false;
-            })
-        }
+            });
+        };
 
         if(!$scope.isPlayer){
             $scope.startHost();

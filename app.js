@@ -39,7 +39,7 @@ io.on('connection', function (socket) {
 
     // No persistence
     uuid = socket.id;
-    console.log("connection", socket.id);
+    console.log("Socket", socket.id, "connected");
 
     //socket.set('uuid', uuid);
     socket.on('connect', function(cb){
@@ -50,12 +50,11 @@ io.on('connection', function (socket) {
     // User Joins
     socket.on('join', function(data, cb){
         // This is called manually when the client has loaded
-        console.log("Player joined " + JSON.stringify(data));
         doodoodle.join(socket.id, data.name, data.room, function(err, res){
             if (err) { return cb(err); }
             else{
                 socket.join(res.room);
-                console.log("emitting to", res.room);
+                console.log(res.room, "--> Player", data.name, "joined");
                 io.to(res.room).emit('game', res );
             }
           cb(null, { game: res });
@@ -65,12 +64,11 @@ io.on('connection', function (socket) {
 
     socket.on('host', function(cb){
         // This is called manually when the client has loaded
-        console.log("Host started");
         doodoodle.host(socket.id, function(err, res){
             if (err) { socket.emit("alert", err); }
             else{
                 socket.join(res.room); // Host still listens to this channel
-                console.log("emitting to", res.room);
+                console.log(res.room, "--> Created");
                 io.to(res.room).emit('game', res );
             }
           cb({ game: res });
@@ -82,8 +80,9 @@ io.on('connection', function (socket) {
     socket.on('start', function(cb){
         var gameRoom = doodoodle.playerToGame(socket.id);
         doodoodle.start(gameRoom, function(err, game){
+            console.log(err, game);
             if(!err) {
-                console.log("Starting game", gameRoom);
+                console.log(gameRoom, "--> Start", socket.id);
                 // send the game in its new state
                 io.to(gameRoom).emit('game', game);
                 // Since it's a new round, send the round on the round channel
@@ -95,11 +94,10 @@ io.on('connection', function (socket) {
     });
 
     socket.on('drawing', function(data, cb){
-        console.log("drawing received", JSON.stringify(data));
         var gameRoom = doodoodle.playerToGame(socket.id);
         doodoodle.saveDrawing(socket.id, gameRoom, data.lines, function(err, game){
             if(err) return cb(err);
-            console.log("sending drawing back");
+            console.log(gameRoom, "--> Drawing", socket.id);
             io.to(gameRoom).emit('game', game);
         });
     });
@@ -108,19 +106,20 @@ io.on('connection', function (socket) {
         console.log("vote received", JSON.stringify(data));
         var gameRoom = doodoodle.playerToGame(socket.id);
         doodoodle.vote(socket.id, gameRoom, data.votingRound, data.position, function(err, game){
-            if(err) console.log(err)
+            if(err) console.log(err);
             if(err) return cb(err);
+            console.log(gameRoom, "--> Vote", data.votingRound, data.position);
             io.to(gameRoom).emit('game', game);
         });
     });
 
     // User Leaves
     socket.on('disconnect', function(){
+        console.log("Socket", socket.id, "disconnected");
         var gameRoom = doodoodle.playerToGame(socket.id);
         doodoodle.leave(socket.id, function(){
 
         });
-        console.log("Player left", socket.id);
     });
 
     socket.on('onHover', function(data){

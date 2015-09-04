@@ -79,7 +79,8 @@ block content
                 .draw-buttons(ng-class="game-panel", ng-show="game.state.name == 'result'", state="result")
                   | Result buttons          
             p
-              div.alert.alert-danger.error(ng-show="error") {{error}}
+                | Here Be Dragons
+                div.alert.alert-danger.error(ng-show="error") Errors show here {{error}}
         #sidebar.col-sm-6.col-md-3.sidebar-offcanvas
           h2 Players
           .list-group

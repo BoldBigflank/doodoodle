@@ -113,7 +113,7 @@ var newDrawingSeed = function() {
 }
 
 exports.playerToGame = function(playerId, cb){
-    console.log("playerToGame", playerId, playerToGame[playerId]);
+    console.log("Player:", playerId, "Game:", playerToGame[playerId]);
     return playerToGame[playerId];
 };
 
@@ -171,7 +171,7 @@ exports.start = function(room, cb){
     if(!game) return cb("game not found", null);
     // var activePlayers = _.find(game.players, function(player){(player.state=="active")});
     // if(!activePlayers || activePlayers.length < 2) return cb("Not enough players to start", null);
-    if(game.players.length < 2) return cb("Not enough players to start", null);
+    if(game.players.length < 3) return cb("Not enough players to start", null);
     
     game.state = STATE.DRAW;
     newRound(game);
