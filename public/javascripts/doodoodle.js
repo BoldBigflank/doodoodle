@@ -106,6 +106,7 @@ app.controller('GameCtrl', function($scope, socket) {
                 if(err) console.log(err);
                 $scope.error = err;
                 $scope.processing = false;
+                $scope.$digest();
             });
         };
 
