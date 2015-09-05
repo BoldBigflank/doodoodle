@@ -212,7 +212,7 @@ exports.vote = function(uuid, room, votingRound, position, cb){
         return _.contains(drawing.votes, uuid);
     });
     console.log("hasVoted", hasVoted);
-    if(hasVoted === undefined) return cb("You've already voted this round");
+    if(hasVoted !== undefined) return cb("You've already voted this round");
     var drawing = _.findWhere(game.round, {votingRound:votingRound, position:position});
     
     // TODO: Check the other drawings for votes this round
@@ -221,13 +221,21 @@ exports.vote = function(uuid, room, votingRound, position, cb){
     // Check here to move to the next voting round/Result phase
     var allVotes = _.flatten(_.pluck(drawingsThisRound, 'votes'));
     console.log("all votes", allVotes);
-
-    // If there are no active players not in the allVotes list, continut
-
-    var votingInProgress = 0; // UPDATE THIS
+    var activePlayers = _.pluck(_.where(game.players, {state: "active"}), 'id');
     
-    console.log("votingInProgress", votingInProgress);
-    if(votingInProgress === undefined) game.state = STATE.RESULT;
+    // If there are no active players not in the allVotes list, continue
+
+
+    var votersLeft = _.difference(activePlayers, allVotes);
+    
+    console.log("votersLeft", votersLeft);
+    if(votersLeft.length == 0) {
+        console.log("Next voting round");
+        game.votingRound += 1;
+    };
+    if(game.votingRound >= activePlayers.length){
+        game.state = STATE.RESULT;
+    }
 
     cb(null, game);
 };
