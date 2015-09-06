@@ -164,6 +164,7 @@ app.directive("drawing", function ($document, socket) {
           var position = (attrs["position"] !== undefined) ? parseInt(attrs["position"]) : -1;
           var editable = (position <= 0);
           var isDrawing = false;
+          var submitted = false;
           
 
           var canvasCoord = function (coord) {
@@ -289,7 +290,7 @@ app.directive("drawing", function ($document, socket) {
 
           // *** Vote Controls ***
           if(position > 0){
-            canvas.addEventListener('touchend', vote)
+            canvas.addEventListener('touchend', vote);
             canvas.addEventListener('mouseup', vote);
           }
 
@@ -298,8 +299,11 @@ app.directive("drawing", function ($document, socket) {
               socket.emit('drawing', drawing, function(err, game){
                   console.log(err, game);
                   scope.error = err;
+                  // If there are more to do, replace this with them.
+
+                  scope.updatePictures(game, true);
               });
-          }
+          };
 
           scope.votePicture = function(){
               var data = {};
@@ -307,16 +311,18 @@ app.directive("drawing", function ($document, socket) {
               console.log("sending", scope.linesArray);
               socket.emit('vote', data, function(err, game){
                   console.log(err, game);
+                  // TODO: Make the error display
 
               });
           };
 
-          socket.on('game', function(gameData){
+          scope.updatePictures = function(gameData, fullUpdate){
             var gameDrawing = null;
+            
             // Update the player seed
             if(position == -1){
-              console.log("Updating the main drawing")
-              gameDrawing = _.findWhere(gameData.round, { player: io().id });
+              console.log("Updating the main drawing");
+              gameDrawing = _.findWhere(gameData.round, { player: io().id, lines:null });
               if(!gameDrawing) return;
 
               var newLines = _.without(gameDrawing.seed, drawing.seed);
@@ -325,14 +331,19 @@ app.directive("drawing", function ($document, socket) {
                 drawing.seed = gameDrawing.seed;
               }
 
-              // drawing.lines = gameDrawing.lines; // Don't replace the player's work
-              drawing.seed = gameDrawing.seed;
-              drawing.player = gameDrawing.player;
-              drawing.position = gameDrawing.position;
-              drawing.votingRound = gameDrawing.votingRound;
-              drawing.votes = gameDrawing.votes;
-            
-              // drawing = gameDrawing;
+              if(fullUpdate){
+                console.log("Doing a full update");
+                clearCanvas();
+                draw(gameDrawing.seed);
+                // draw(gameDrawing.lines);
+                drawing = gameDrawing;
+              } else {
+                drawing.seed = gameDrawing.seed;
+                drawing.player = gameDrawing.player;
+                drawing.position = gameDrawing.position;
+                drawing.votingRound = gameDrawing.votingRound;
+                drawing.votes = gameDrawing.votes;
+              }
             }
             
             // Draw the pictures to be voted on
@@ -348,7 +359,10 @@ app.directive("drawing", function ($document, socket) {
               }
             }
 
+          };
 
+          socket.on('game', function(gameData){
+            scope.updatePictures(gameData, false);
           });
         }
       };

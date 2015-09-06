@@ -94,9 +94,9 @@ var newRound = function (game) {
             position: 2,
             votingRound: votingRound,
             lines: null,
-            votes: [player.id]
+            votes: [partnerId]
         };
-        round.push(drawing);
+        round.push(drawing2);
 
         votingRound++;
     }
@@ -208,25 +208,24 @@ exports.vote = function(uuid, room, votingRound, position, cb){
     var player = _.findWhere( game.players, {id: uuid} );
     if(!player) return cb("player not found", null);
     var drawingsThisRound = _.where(game.round, {votingRound:votingRound});
-    var hasVoted = _.find(drawingsThisRound, function(drawing){
-        return _.contains(drawing.votes, uuid);
-    });
+    var allVotes = _.flatten(_.pluck(drawingsThisRound, 'votes'));
+    console.log("all votes", allVotes);
+    var hasVoted = _.contains(allVotes, uuid);
+    // _.find(drawingsThisRound, function(drawing){
+    //     return _.contains(drawing.votes, uuid);
+    // });
     console.log("hasVoted", hasVoted);
-    if(hasVoted !== undefined) return cb("You've already voted this round");
+    if(hasVoted) return cb("You've already voted this round");
     var drawing = _.findWhere(game.round, {votingRound:votingRound, position:position});
     
     // TODO: Check the other drawings for votes this round
     if(drawing.votes === null) drawing.votes = [drawing.player];
     drawing.votes.push(uuid);
     // Check here to move to the next voting round/Result phase
-    var allVotes = _.flatten(_.pluck(drawingsThisRound, 'votes'));
-    console.log("all votes", allVotes);
     var activePlayers = _.pluck(_.where(game.players, {state: "active"}), 'id');
     
     // If there are no active players not in the allVotes list, continue
-
-
-    var votersLeft = _.difference(activePlayers, allVotes);
+    var votersLeft = _.difference(activePlayers, allVotes, [uuid]);
     
     console.log("votersLeft", votersLeft);
     if(votersLeft.length == 0) {

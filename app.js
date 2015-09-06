@@ -99,6 +99,7 @@ io.on('connection', function (socket) {
             if(err) return cb(err);
             console.log(gameRoom, "--> Drawing", socket.id);
             io.to(gameRoom).emit('game', game);
+            return cb(null, game); // Should we be sending the game back?
         });
     });
 
