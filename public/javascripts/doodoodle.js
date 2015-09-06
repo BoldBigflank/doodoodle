@@ -118,6 +118,13 @@ app.controller('GameCtrl', function($scope, socket) {
             console.log("gameData received");
             $scope.loadGame(gameData);
         });
+        
+        socket.on('error', function(message){
+            console.log("ERROR:", message);
+            $scope.error = message;
+            $scope.$digest();
+        });
+
 
         $scope.$on('$destroy', function (event) {
             socket.removeAllListeners();
