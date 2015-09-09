@@ -198,6 +198,7 @@ app.directive("drawing", function ($document, socket) {
       var draw = function (lines) {
         for (var x in lines) {
           var line = lines[x];
+          if ( line[0] === undefined ) return;
           startLine(line[0]);
           for (var y in line) {
             var point = line[y];
@@ -305,8 +306,8 @@ app.directive("drawing", function ($document, socket) {
           console.log(err, game);
           scope.error = err;
           // If there are more to do, replace this with them.
-
-          scope.updatePictures(game, true);
+          scope.updatePictures(game);
+          clearCanvas();
         });
       };
 
@@ -321,17 +322,20 @@ app.directive("drawing", function ($document, socket) {
         });
       };
 
-      scope.updatePictures = function (gameData, fullUpdate) {
+      scope.updatePictures = function (gameData) {
         var gameDrawing = null;
 
         // Update the player seed
         if (position == -1) {
           console.log("Updating the main drawing");
           gameDrawing = _.findWhere(gameData.round, {
-            player: io().id,
+            playerId: io().id,
             lines: null
           });
-          if (!gameDrawing) return;
+          if (!gameDrawing){ 
+            console.log("No gameDrawing");
+            return;
+          }
 
           var newLines = _.without(gameDrawing.seed, drawing.seed);
           if (newLines) {
@@ -339,24 +343,23 @@ app.directive("drawing", function ($document, socket) {
             drawing.seed = gameDrawing.seed;
           }
 
-          if (fullUpdate) {
-            console.log("Doing a full update");
-            clearCanvas();
-            draw(gameDrawing.seed);
-            // draw(gameDrawing.lines);
-            drawing = gameDrawing;
-          } else {
-            drawing.seed = gameDrawing.seed;
-            drawing.player = gameDrawing.player;
-            drawing.position = gameDrawing.position;
-            drawing.votingRound = gameDrawing.votingRound;
-            drawing.votes = gameDrawing.votes;
-          }
+          // console.log("Doing a full update");
+          // // draw(gameDrawing.seed);
+          // // draw(gameDrawing.lines);
+          // drawing = gameDrawing;
+        
+          drawing.seed = gameDrawing.seed;
+          drawing.player = gameDrawing.player;
+          drawing.position = gameDrawing.position;
+          drawing.votingRound = gameDrawing.votingRound;
+          drawing.votes = gameDrawing.votes;
+        
         }
 
         // Draw the pictures to be voted on
         else if (gameData.state.name == "vote") {
           if (gameData.votingRound != drawing.votingRound) { // Voting round has changed
+            console.log("Updating the voting one");
             votingRound = gameData.votingRound;
             gameDrawing = _.findWhere(gameData.round, {
               position: position,
@@ -374,7 +377,8 @@ app.directive("drawing", function ($document, socket) {
 
       socket.on('game', function (gameData) {
         console.log("Drawing -> game received");
-        scope.updatePictures(gameData, false);
+        if(game.state.name in ['prep', 'result']) clearCanvas();
+        scope.updatePictures(gameData);
       });
     }
   };

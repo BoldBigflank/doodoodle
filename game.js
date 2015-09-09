@@ -203,7 +203,7 @@ exports.saveDrawing = function(uuid, room, data, cb){
     if(!game) return cb("game not found", null);
     var player = _.findWhere( game.players, {id: uuid} );
     if(!player) return cb("player not found", null);
-    var drawing = _.findWhere( game.round, {player: player.id, votingRound: data.votingRound, position: data.position});
+    var drawing = _.findWhere( game.round, {playerId: player.id, votingRound: data.votingRound, position: data.position});
     if(!drawing) { return cb("You are not a part of this round", null); }
     drawing.lines = drawingData;
     // drawing.votes = [drawing.player];
