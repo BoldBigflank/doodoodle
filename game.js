@@ -37,6 +37,13 @@ var newRoom = function () {
     while (roomString.length < 4) {
         roomString += validCharacters.substr(Math.floor(Math.random()*validCharacters.length), 1);
     }
+    
+    // DEBUG
+    roomString = "TEST";
+    // DEBUG: Remove any existing tests
+    var game = getGame(roomString);
+    games = _.without(games, game);
+    
     return roomString;
 };
 
@@ -82,7 +89,7 @@ var newRound = function (game) {
         drawingSeed = newDrawingSeed();
 
         var drawing = {
-            player: player.id,
+            playerId: player.id,
             seed: drawingSeed,
             position: 1,
             votingRound: votingRound,
@@ -93,7 +100,7 @@ var newRound = function (game) {
 
         partnerId = activePlayers[(p+1) % activePlayers.length ].id;
         var drawing2 = {
-            player: partnerId,
+            playerId: partnerId,
             seed: drawingSeed,
             position: 2,
             votingRound: votingRound,
@@ -113,6 +120,14 @@ var newDrawingSeed = function() {
     var seed = _.sample(seeds);
     return _.sample(seeds);
 
+}
+
+var updateScores = function(game){
+    for(x in game.round){
+        var drawing = game.round[x];
+        var player = _.find(game.players, {"id":drawing.playerId});
+        player.score += drawing.votes.length-1;
+    }
 }
 
 exports.playerToGame = function(playerId, cb){
@@ -172,10 +187,10 @@ exports.join = function(uuid, name, room, cb){
 exports.start = function(room, cb){
     var game = getGame(room);
     if(!game) return cb("game not found", null);
-    // var activePlayers = _.find(game.players, function(player){(player.state=="active")});
-    // if(!activePlayers || activePlayers.length < 2) return cb("Not enough players to start", null);
-    if(game.players.length < 3) return cb("Not enough players to start", null);
-    
+    var activePlayers = _.pluck(_.where(game.players, {state: "active"}), 'id');
+    if(activePlayers.length < 3) return cb("Not enough players to start", null);
+    if(game.state != STATE.PREP && game.state != STATE.RESULT) return cb("Now is not the time to start a new round");
+
     game.state = STATE.DRAW;
     newRound(game);
 
@@ -225,20 +240,21 @@ exports.vote = function(uuid, room, votingRound, position, cb){
     var drawing = _.findWhere(game.round, {votingRound:votingRound, position:position});
     
     // TODO: Check the other drawings for votes this round
-    if(drawing.votes === null) drawing.votes = [drawing.player];
+    if(drawing.votes === null) drawing.votes = [drawing.playerId];
     drawing.votes.push(uuid);
     // Check here to move to the next voting round/Result phase
     var activePlayers = _.pluck(_.where(game.players, {state: "active"}), 'id');
-    
+
     // If there are no active players not in the allVotes list, continue
     var votersLeft = _.difference(activePlayers, allVotes, [uuid]);
     
     console.log("votersLeft", votersLeft);
-    if(votersLeft.length == 0) {
+    if(votersLeft.length === 0) {
         console.log("Next voting round");
         game.votingRound += 1;
-    };
+    }
     if(game.votingRound >= activePlayers.length){
+        updateScores(game);
         game.state = STATE.RESULT;
     }
 

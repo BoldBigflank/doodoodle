@@ -37,6 +37,12 @@ block content
                 h2 Draw Phase
                 h3 On your device, add to the picture
                 h4 Make it funny, cool, whatever
+              div.col-sm-12.text-center(ng-show="game.state.name == 'result'")
+                h2 Result Phase
+                h3 Here's who got what votes
+
+                
+
 
             //- Player Controls
             div.row(ng-show="isPlayer")
@@ -52,7 +58,7 @@ block content
                   p {{playerName}}
                 .form-group
                   label(for='inputRoom') Room
-                  input#inputRoom.form-control(ng-model="joinData.room", type='text', placeholder='XXXX', required, ng-minlength=4, ng-maxlength=4, ng-patterh="[A-Z]", maxlength=4)
+                  input#inputRoom.form-control(ng-model="joinData.room", type='text', placeholder='XXXX', required, ng-minlength=4, ng-maxlength=4, ng-pattern="/[A-Z]*/", maxlength=4)
                   p {{room}}
                 button.btn.btn-block.btn-default.text-uppercase(ng-click="startPlayer()",type='submit', ng-disabled="playerForm.$invalid") Go
               //- Game controls
@@ -77,14 +83,30 @@ block content
                   .col-md-6(width=450, height=600, drawing, resize, scale=0.4, position=2)
                 //- Result
                 .draw-buttons(ng-class="game-panel", ng-show="game.state.name == 'result'", state="result")
-                  | Result buttons          
+                  | Result buttons
+                  button.btn.btn-block.btn-default.text-uppercase(ng-click="action('start')",type='submit') New Round
             p
-                | Here Be Dragons
-                div.alert.alert-danger.error(ng-show="error") Errors show here {{error}}
+                | {{ game.error }}
+                div.alert.alert-danger.error(ng-repeat='e in game.errors')
+                  | {{ e.content }}
+
         #sidebar.col-sm-6.col-md-3.sidebar-offcanvas
-          h2 Players
-          .list-group
-            a.list-group-item.active(ng-repeat='p in game.players') Player {{p.name}}
+          span
+            h4 Leaderboard
+          table.leaders.table.table-striped
+            thead
+              tr
+                th #
+                th Name:
+                th Score
+            tbody
+              tr(ng-repeat='p in game.players')
+                td {{$index + 1}}
+                td {{p.name}}
+                td {{p.score}}
+          //- h2 Players
+          //- .list-group
+          //-   a.list-group-item.active(ng-repeat='p in game.players') Player {{p.name}}
             
     hr
     |       
