@@ -38,15 +38,19 @@ app.factory('socket', function ($rootScope) {
   };
 });
 
-app.controller('GameCtrl', function ($scope, socket) {
+app.controller('GameCtrl', function ($scope, $timeout, socket) {
   $scope.playerId = 0;
   $scope.joinData = {"name":"Alex", "room":"TEST"};
   $scope.isPlayer = isPlayer;
   $scope.playerName = "";
   $scope.room = "";
-  $scope.error = null;
   $scope.errors = [];
   $scope.drawingData = "drawingData";
+
+  var popError = function(){
+    $scope.errors.shift();
+    $scope.$digest();
+  };
 
   $scope.loadGame = function (gameData) {
     $scope.game = gameData;
@@ -55,19 +59,6 @@ app.controller('GameCtrl', function ($scope, socket) {
       p = $scope.game.players[x];
     }
     $scope.$digest();
-  };
-
-  // Used to iterate each life
-  $scope.range = function (n) {
-    return new Array(n);
-  };
-
-  $scope.startGame = function () {
-    console.log("startGame");
-    socket.emit('start', function (err) {
-      console.log(err);
-      $scope.error = err;
-    });
   };
 
   $scope.startHost = function () {
@@ -85,10 +76,7 @@ app.controller('GameCtrl', function ($scope, socket) {
     console.log("Name " + $scope.joinData.name);
     console.log("room " + $scope.joinData.room);
     socket.emit('join', $scope.joinData, function (err, data) {
-      $scope.error = err;
-      if (err) {
-        $scope.error = "Error:" + err;
-      } else {
+      if (!err) {
         console.log("joined", data);
         $scope.loadGame(data.game);
       }
@@ -101,12 +89,7 @@ app.controller('GameCtrl', function ($scope, socket) {
     console.log("Control action: " + action);
     socket.emit(action, {}, function (err) {
       if (err) {
-        console.log("Error CB: ", err);
-        $scope.error = err;
-        $scope.errors.push({
-          'type': 'danger',
-          'content': err
-        });
+        console.log("Callback error: ", err);
       }
       $scope.processing = false;
       $scope.$digest();
@@ -122,11 +105,12 @@ app.controller('GameCtrl', function ($scope, socket) {
     $scope.loadGame(gameData);
   });
 
-  // socket.on('error', function(message){
-  //     console.log("ERROR:", message);
-  //     $scope.error = message;
-  //     $scope.$digest();
-  // });
+  socket.on('alert', function(data){
+      console.log("Alert", data.level, ":", data.message);
+      $scope.errors.push(data);
+      $scope.$digest();
+      $timeout(popError, 3500);
+  });
 
 
   $scope.$on('$destroy', function (event) {
@@ -165,10 +149,6 @@ app.directive("drawing", function ($document, socket) {
           votingRound: -1,
           votes: null
         };
-        // var lines;
-        // var seed;
-        // $scope.linesArray = []; // Player's drawing in global scope to be submitted
-        // var votingRound = -1;
 
       // Drawing variables
       var position = (attrs.position !== undefined) ? parseInt(attrs.position) : -1;
@@ -298,7 +278,7 @@ app.directive("drawing", function ($document, socket) {
           "votingRound": drawing.votingRound,
           position: drawing.position
         }, function (err, game) {
-          scope.error = err;
+          console.log("Vote callback:", err, game);
         });
       };
 

@@ -51,7 +51,7 @@ io.on('connection', function (socket) {
     socket.on('join', function(data, cb){
         // This is called manually when the client has loaded
         doodoodle.join(socket.id, data.name, data.room, function(err, res){
-            if (err) { socket.emit("alert", err); return cb(err); }
+            if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
             else{
                 socket.join(res.room);
                 console.log(res.room, "--> Player", data.name, "joined");
@@ -65,7 +65,7 @@ io.on('connection', function (socket) {
     socket.on('host', function(cb){
         // This is called manually when the client has loaded
         doodoodle.host(socket.id, function(err, res){
-            if (err) { socket.emit("alert", err); return cb(err); }
+            if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
             else{
                 socket.join(res.room); // Host still listens to this channel
                 console.log(res.room, "--> Created");
@@ -80,7 +80,7 @@ io.on('connection', function (socket) {
     socket.on('start', function(data, cb){
         var gameRoom = doodoodle.playerToGame(socket.id);
         doodoodle.start(gameRoom, function(err, game){
-            if (err) { socket.emit("alert", err); return cb(err); }
+            if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
             else {
                 console.log(gameRoom, "--> Start", socket.id);
                 // send the game in its new state
@@ -95,7 +95,7 @@ io.on('connection', function (socket) {
     socket.on('drawing', function(data, cb){
         var gameRoom = doodoodle.playerToGame(socket.id);
         doodoodle.saveDrawing(socket.id, gameRoom, data, function(err, game){
-            if (err) { socket.emit("alert", err); return cb(err); }
+            if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
             console.log(gameRoom, "--> Drawing", socket.id);
             io.to(gameRoom).emit('game', game);
             return cb(null, game); // Should we be sending the game back?
@@ -106,7 +106,7 @@ io.on('connection', function (socket) {
         console.log("vote received", JSON.stringify(data));
         var gameRoom = doodoodle.playerToGame(socket.id);
         doodoodle.vote(socket.id, gameRoom, data.votingRound, data.position, function(err, game){
-            if (err) { socket.emit("alert", err); return cb(err); }
+            if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
             console.log(gameRoom, "--> Vote", data.votingRound, data.position);
             io.to(gameRoom).emit('game', game);
         });

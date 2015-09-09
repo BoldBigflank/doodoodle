@@ -86,9 +86,9 @@ block content
                   | Result buttons
                   button.btn.btn-block.btn-default.text-uppercase(ng-click="action('start')",type='submit') New Round
             p
-                | {{ game.error }}
-                div.alert.alert-danger.error(ng-repeat='e in game.errors')
-                  | {{ e.content }}
+                | Error: {{ error }}
+                div.alert.alert-danger.error(ng-repeat='e in errors.slice().reverse() track by $index ')
+                  | {{$index}} {{ e.message }}
 
         #sidebar.col-sm-6.col-md-3.sidebar-offcanvas
           span
