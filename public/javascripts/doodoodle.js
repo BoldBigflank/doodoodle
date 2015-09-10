@@ -306,8 +306,8 @@ app.directive("drawing", function ($document, socket) {
           console.log(err, game);
           scope.error = err;
           // If there are more to do, replace this with them.
-          scope.updatePictures(game);
           clearCanvas();
+          scope.updatePictures(game);
         });
       };
 
@@ -332,7 +332,7 @@ app.directive("drawing", function ($document, socket) {
             playerId: io().id,
             lines: null
           });
-          if (!gameDrawing){ 
+          if (!gameDrawing){
             console.log("No gameDrawing");
             return;
           }
@@ -377,7 +377,7 @@ app.directive("drawing", function ($document, socket) {
 
       socket.on('game', function (gameData) {
         console.log("Drawing -> game received");
-        if(game.state.name in ['prep', 'result']) clearCanvas();
+        if(gameData.state.name in ['prep', 'result']) clearCanvas();
         scope.updatePictures(gameData);
       });
     }

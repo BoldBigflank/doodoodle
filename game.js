@@ -217,7 +217,7 @@ exports.saveDrawing = function(uuid, room, data, cb){
         game.votingRound = 0;
     }
     // EXTRA Put a line from the drawing into the seeds
-    seeds.push(_.sample(data.lines));
+    seeds.push([_.sample(data.lines)]);
     cb(null, game);
 
 };
