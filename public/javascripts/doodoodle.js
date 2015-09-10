@@ -5,8 +5,8 @@
 var app = angular.module('doodoodleApp', []);
 
 app.factory('socket', function ($rootScope) {
-  // var socket = io.connect();
-  var socket = io.connect('http://localhost:3000');
+  var socket = io.connect(); // Production
+  // var socket = io.connect('http://localhost:3000'); // Local
   // var socket = io.connect('http://192.168.29.235:3000');
 
   return {
