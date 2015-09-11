@@ -14,7 +14,7 @@ block content
             .pull-right.visible-xs.visible-sm
               //- button.btn.btn-primary.btn-xs.dropdown-toggle( data-toggle='dropdown', aria-haspopup="true", aria-expanded="false") Scores
               .dropdown
-                button.btn.btn-primary.btn-xs#dLabel(type="button", data-toggle="dropdown", aria-haspopup="true", aria-expanded="false")
+                button.btn.btn-primary.btn-xs#dLabel(ng-show="game && game.players.length > 0", type="button", data-toggle="dropdown", aria-haspopup="true", aria-expanded="false")
                   | Scores
                   span.caret
                 ul.dropdown-menu.dropdown-menu-right( aria-labelledby="dLabel")
