@@ -124,7 +124,7 @@ app.controller('GameCtrl', function ($scope, $timeout, socket) {
 app.directive("drawing", function ($document, socket) {
   return {
     template: "<canvas width={{width}}px height={{height}}px scale={{scale}} resize ng-style='style()' class='drawing'></canvas>" +
-      "<button ng-show='{{position}} <= 0' class='btn btn-block btn-default text-uppercase' ng-click='submitPicture()' type='submit'>SubmitAlex</button>",
+      "<button ng-show='{{position}} <= 0' class='btn btn-block btn-default text-uppercase' ng-click='submitPicture()' type='submit'>Submit</button>",
     restrict: "A",
     transclude: true,
     scope: {
