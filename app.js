@@ -47,6 +47,12 @@ io.on('connection', function (socket) {
         // We don't use this because the client might not be ready to accept data
     });
 
+    // Unity3d Test Socketio package
+    socket.on('beep', function(cb){
+        console.log("Beep received");
+        socket.emit('boop', {"this":"bar"});
+    });
+
     // User Joins
     socket.on('join', function(data, cb){
         // This is called manually when the client has loaded
