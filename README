@@ -2,8 +2,8 @@ X Errors need to be displayed to the user!
 X Players must save/draw TWO drawings
 Hide drawing when there's no
 Result Screen
-Score display
-Alerts disappear after time
+X Score display
+X Alerts disappear after time
 More Starter seeds
 Don't get the same seed in a round
 
@@ -12,7 +12,7 @@ Don't get the same seed in a round
 X Draw by touch
 X Save/upload images
 X Draw an image from data
-Pick one of each
+X Pick one of each
 Results
 
 X Move the game out of the well (make it the side borders when wide)
@@ -22,3 +22,42 @@ Multiple hosts (ghosting/spectating)
 
 Drawing points must be a minimum distance
 Update drawing to be int pairs
+
+Doodoodle - TODO
+
+
+Back End
+X More starting seeds - Don’t duplicate seeds
+Max player limit (participants after to be audience, possibly added in later rounds)
+Draw in Color
+Timers on rounds
+Only send changed data to ‘game'
+
+Give 100 points per vote, plus 1 point to winning voter
+
+Domains
+X ggez.tv
+nore.gg
+party.gg
+glhf.gg
+
+
+
+Front End
+Timer - Progress bar
+Angularjs animations
+Animated drawing
+“Wait” states after draw/vote
+Highlight the drawing you voted on
+Sort Scoreboard
+Highlight you on scoreboard
+Show people who are waiting on scoreboard
+
+Host
+3d/voxel UI for flashiness
+
+
+Better than JBG:
+Flashy 3d graphics
+Progress timer/warning on phone
+More participants will be players
