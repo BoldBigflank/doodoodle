@@ -62,7 +62,7 @@ io.on('connection', function (socket) {
                 socket.join(res.room);
                 console.log(res.room, "--> Player", data.name, "joined");
                 io.to(res.room).emit('game', res );
-                io.to(res.host).emit('event', {"event":"joined"});
+                io.to(res.host).emit('event', {"event":"join"});
             }
           cb(null, { game: res });
 
