@@ -62,6 +62,7 @@ io.on('connection', function (socket) {
                 socket.join(res.room);
                 console.log(res.room, "--> Player", data.name, "joined");
                 io.to(res.room).emit('game', res );
+                io.to(res.host).emit('event', {"event":"joined"});
             }
           cb(null, { game: res });
 
@@ -77,8 +78,7 @@ io.on('connection', function (socket) {
                 console.log(res.room, "--> Created");
                 io.to(res.room).emit('game', res );
             }
-          cb({ game: res });
-
+            return cb(res);
         });
     });
 
@@ -92,7 +92,8 @@ io.on('connection', function (socket) {
                 // send the game in its new state
                 io.to(gameRoom).emit('game', game);
                 // Since it's a new round, send the round on the round channel
-                io.to(gameRoom).emit('round', game.round);
+                // io.to(gameRoom).emit('round', game.round);
+                io.to(game.host).emit('event', {"event":"start"});
             }
         });
 
@@ -104,6 +105,7 @@ io.on('connection', function (socket) {
             if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
             console.log(gameRoom, "--> Drawing", socket.id);
             io.to(gameRoom).emit('game', game);
+            io.to(game.host).emit('event', {"event":"drawing"});
             return cb(null, game); // Should we be sending the game back?
         });
     });
@@ -115,6 +117,7 @@ io.on('connection', function (socket) {
             if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
             console.log(gameRoom, "--> Vote", data.votingRound, data.position);
             io.to(gameRoom).emit('game', game);
+            io.to(game.host).emit('event', {"event":"vote"});
         });
     });
 

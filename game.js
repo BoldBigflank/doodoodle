@@ -60,7 +60,6 @@ var newGame = function (host, cb) {
     var game = {
         id:games.length,
         timer:startTime,
-        discard:[],
         players:[],
         turn:null,
         state:STATE.PREP,
@@ -146,7 +145,7 @@ exports.host = function(uuid, cb){
         game = newGame(uuid);
         // games.push(game);
     }
-    cb(null, game)
+    cb(null, game);
 }
 
 exports.join = function(uuid, name, room, cb){
