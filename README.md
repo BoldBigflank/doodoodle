@@ -1,5 +1,5 @@
-*** PHONE CLIENT
-** Features
+# PHONE CLIENT
+## Features
 - draw-wait and vote-wait states while waiting for others
 - Color pallette
 - Results Screen - design something? Nothing?
@@ -8,7 +8,7 @@
 - (opt)Shake to laugh
 
 
-** Fixes
+## Fixes
 - Style votes - highlight your vote
 - Style scoreboard - highlight you
 - Style scoreboard - show people who are done (draw/vote)
@@ -19,15 +19,15 @@
 - Animations between states
 
 
-*** UNITY CLIENT
-** Features
+# UNITY CLIENT
+## Features
 - Display pictures
 - Shake to laugh
 - Reconnnect? feature
 
 
-*** SERVER
-** Features
+# SERVER
+## Features
 - color data on lines
 - room players limit
 - Boot player (make spectator)
@@ -36,17 +36,17 @@
 - Special round 3 (theme)
 - Connoisseur Award
 
-** Fixes
+## Fixes
 - More/Better starting seeds
 
 
-Domains
-X ggez.tv
-nore.gg
-party.gg
-glhf.gg
+Domains  
+X ggez.tv  
+nore.gg  
+party.gg  
+glhf.gg  
 
-Better than JBG:
-Flashy 3d graphics
-Progress timer/warning on phone
+Better than JBG:  
+Flashy 3d graphics  
+Progress timer/warning on phone  
 More participants will be players
