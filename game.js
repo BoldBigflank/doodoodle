@@ -171,6 +171,8 @@ exports.join = function(uuid, name, room, cb){
             , position:-1
             , score: 0
             , room: room
+            , complete: false
+            , voted: false
         }
         // Take a hand of cards from the deck
         playerToGame[player.id] = game.room;
@@ -210,8 +212,15 @@ exports.saveDrawing = function(uuid, room, data, cb){
     // If it's the last drawing needed, go to Vote round
     console.log(game.round);
     
+    // Determine whether to set the player's complete variable
+    if (_.findWhere( game.round, {lines: null, playerId:player.id} ) === undefined) {
+        console.log("player drawings collected");
+        player.complete = true;
+    }
+
     if (_.findWhere( game.round, {lines: null} ) === undefined) {
         console.log("all drawings collected");
+        _.each(game.players, function(element, index, list) {element.complete = false;});
         game.state = STATE.VOTE;
         game.votingRound = 0;
     }
@@ -241,6 +250,7 @@ exports.vote = function(uuid, room, votingRound, position, cb){
     // TODO: Check the other drawings for votes this round
     if(drawing.votes === null) drawing.votes = [drawing.playerId];
     drawing.votes.push(uuid);
+    player.voted = true;
     // Check here to move to the next voting round/Result phase
     var activePlayers = _.pluck(_.where(game.players, {state: "active"}), 'id');
 
@@ -250,6 +260,7 @@ exports.vote = function(uuid, room, votingRound, position, cb){
     console.log("votersLeft", votersLeft);
     if(votersLeft.length === 0) {
         console.log("Next voting round");
+        _.each(game.players, function(element, index, list) {element.voted = false;});
         game.votingRound += 1;
     }
     if(game.votingRound >= activePlayers.length){

@@ -129,7 +129,7 @@ block content
                 th Name:
                 th Score
             tbody
-              tr(ng-repeat='p in game.players | orderBy: "-score"')
+              tr(ng-class="{'info':p.id == playerId, 'success':p.complete || p.voted }", ng-repeat='p in game.players | orderBy: "-score"')
                 td {{$index + 1}}
                 td {{p.name}}
                 td {{p.score}}

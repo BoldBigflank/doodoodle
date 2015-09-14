@@ -52,6 +52,12 @@ app.controller('GameCtrl', function ($scope, $timeout, socket) {
     $scope.$digest();
   };
 
+  var scoreboardClass = function(player){
+    console.log("scoreboardClass", player);
+    if(player.id == $scope.playerId) return "primary";
+    return "success";
+  }
+
   $scope.loadGame = function (gameData) {
     $scope.game = gameData;
     console.log("Game is now", $scope.game);
@@ -73,6 +79,7 @@ app.controller('GameCtrl', function ($scope, $timeout, socket) {
 
   $scope.startPlayer = function () {
     $scope.player = true;
+    $scope.playerId = io().id;
     console.log("Name " + $scope.joinData.name);
     console.log("room " + $scope.joinData.room);
     socket.emit('join', $scope.joinData, function (err, data) {
@@ -128,7 +135,7 @@ app.controller('GameCtrl', function ($scope, $timeout, socket) {
 
 app.directive("drawing", function ($document, socket) {
   return {
-    template: "<canvas width={{width}}px height={{height}}px scale={{scale}} resize ng-style='style()' class='drawing'></canvas>" +
+    template: "<canvas ng-class='{\"bg-primary\": drawing.votes.indexOf(io().id) != -1 }' width={{width}}px height={{height}}px scale={{scale}} resize ng-style='style()' class='drawing'></canvas>" +
       "<button ng-show='{{position}} <= 0' class='btn btn-block btn-default text-uppercase' ng-click='submitPicture()' type='submit'>Submit</button>",
     restrict: "A",
     transclude: true,
