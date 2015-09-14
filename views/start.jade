@@ -7,7 +7,6 @@ block content
         
     script.
       var isPlayer= #{isPlayer};
-  
     .row.row-offcanvas.row-offcanvas-right
         div
           .col-sm-12.col-md-9
@@ -71,13 +70,13 @@ block content
                 .panel-body
                   form(ng-class="game-panel", name="playerForm")
                     .form-group
-                      label(for='inputName') Name
-                      input#inputName.form-control(name="inputName", ng-model="joinData.name", type='text', placeholder='Name', required)
-                      p {{playerName}}
-                    .form-group
                       label(for='inputRoom') Room
                       input#inputRoom.form-control(ng-model="joinData.room", type='text', placeholder='XXXX', required, ng-minlength=4, ng-maxlength=4, ng-pattern="/[A-Z]*/", maxlength=4)
                       p {{room}}
+                    .form-group
+                      label(for='inputName') Name
+                      input#inputName.form-control(name="inputName", ng-model="joinData.name", type='text', placeholder='Name', required)
+                      p {{playerName}}
                     .form-group
                       button.btn.btn-block.btn-info.text-uppercase(ng-click="startPlayer()",type='submit', ng-disabled="playerForm.$invalid") Go
                     .form-group

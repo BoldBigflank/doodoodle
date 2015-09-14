@@ -46,7 +46,7 @@ app.controller('GameCtrl', function ($scope, $timeout, socket) {
   $scope.room = "";
   $scope.errors = [];
   $scope.drawingData = "drawingData";
-
+    
   var popError = function(){
     $scope.errors.shift();
     $scope.$digest();
@@ -98,6 +98,11 @@ app.controller('GameCtrl', function ($scope, $timeout, socket) {
 
   if (!$scope.isPlayer) {
     $scope.startHost();
+  } else {
+    var inputRoom = document.getElementById("inputRoom");
+    inputRoom.focus();
+    setTimeout(function () { inputRoom.select(); }, 10);
+
   }
 
   socket.on('game', function (gameData) {
