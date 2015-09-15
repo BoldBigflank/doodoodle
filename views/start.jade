@@ -93,20 +93,26 @@ block content
                   h3 When everyone is in, press Start
                   button.btn.btn-block.btn-default.text-uppercase(ng-click="action('start')",type='submit') Start
                 //- Draw
-                .header(ng-class="game-panel", ng-show="game.state.name == 'draw'", state="draw")
+                .header(ng-class="game-panel", ng-show="game.state.name == 'draw' && !player.complete", state="draw")
                   h3.text-center Draw
                   .cols-sm-12
                     div(width=450, height=600, scale=0.75, position=-1, drawing )
                   .col-xs-12
                     .progress
                       .progress-bar(role="progressbar")
-                  //- button.btn.btn-block.btn-default.text-uppercase(ng-click="submitPicture()",type='submit') Submit
-                  //- p {{linesArray}}
+                //- Draw - Complate
+                .header(ng-class="game-panel", ng-show="game.state.name == 'draw' && player.complete", state="draw")
+                  h3.text-center Done
+                  .cols-sm-12
+                    h3 You did it! Now wait on everyone else.
                 //- Vote
-                .draw(ng-class="game-panel", ng-show="game.state.name == 'vote'", state="vote")
+                .draw(ng-class="game-panel", ng-show="game.state.name == 'vote' && !player.voted", state="vote")
                   h3 Pick your favorite
                   .col-md-6(width=450, height=600, drawing, resize, scale=0.4, position=1)
                   .col-md-6(width=450, height=600, drawing, resize, scale=0.4, position=2)
+                //- Vote - complete
+                .draw(ng-class="game-panel", ng-show="game.state.name == 'vote' && player.voted", state="vote")
+                  h3 You are good at picking things.
                 //- Result
                 .draw-buttons(ng-class="game-panel", ng-show="game.state.name == 'result'", state="result")
                   | Result buttons

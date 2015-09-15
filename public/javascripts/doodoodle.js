@@ -40,7 +40,8 @@ app.factory('socket', function ($rootScope) {
 
 app.controller('GameCtrl', function ($scope, $timeout, socket) {
   $scope.playerId = 0;
-  $scope.joinData = {"name":"Alex", "room":"TEST"};
+  $scope.joinData = {"name":"Alex", "room":"TEST"}; // DEBUG DATA
+  $scope.player = null;
   $scope.isPlayer = isPlayer;
   $scope.playerName = "";
   $scope.room = "";
@@ -52,17 +53,16 @@ app.controller('GameCtrl', function ($scope, $timeout, socket) {
     $scope.$digest();
   };
 
-  var scoreboardClass = function(player){
-    console.log("scoreboardClass", player);
-    if(player.id == $scope.playerId) return "primary";
-    return "success";
-  }
-
   $scope.loadGame = function (gameData) {
     $scope.game = gameData;
     console.log("Game is now", $scope.game);
     for (var x in $scope.game.players) {
-      p = $scope.game.players[x];
+      var p = $scope.game.players[x];
+      if(p.id == $scope.playerId){
+        console.log("Found player I am");
+        $scope.player = p;
+        break;
+      }
     }
     $scope.$digest();
   };

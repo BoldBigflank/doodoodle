@@ -48,7 +48,7 @@ canvas.drawing{
   margin: 5px auto;
   outline: 0;
   border: 2px solid #2c3e50;
-  background-color: #FFF;;
+  background-color: #fff;
 }
 
 .game-panel.ng-hide {
