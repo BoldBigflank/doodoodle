@@ -260,10 +260,16 @@ app.directive("drawing", function ($document, socket) {
               "y": event.offsetY
             });
           } else {
+            var touch = event.touches[0];
+            if(!touch) console.log("Touch not found!");
             coord = canvasCoord({
-              "x": event.layerX,
-              "y": event.layerY
+              "x": touch.clientX - event.srcElement.offsetLeft,
+              "y": touch.clientY- event.srcElement.offsetTop
             });
+            // coord = canvasCoord({
+            //   "x": event.layerX,
+            //   "y": event.layerY
+            // });
           }
           drawLine(coord);
           // Add to line for saving
