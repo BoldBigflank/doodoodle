@@ -323,11 +323,10 @@ app.directive("drawing", function ($document, socket) {
       var end = function (event) {
         if (isDrawing) {
           // Push the line for saving
-          // $scope.linesArray.push(currentLine);
           if (!drawing.lines) drawing.lines = [];
           drawing.lines.push({"color":scope.color, "points":currentLine});
-          // console.log(JSON.stringify(linesArray));
-          // $scope.$digest();
+          // Put the seedline on top
+          draw(drawing.seed);
         }
         // stop drawing
         isDrawing = false;
