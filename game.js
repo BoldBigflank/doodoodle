@@ -78,7 +78,9 @@ var newGame = function (host, cb) {
 };
 
 var getGame = function (room) {
-    return _.find(games, function(game){ return game.room == room; });
+    var game = _.find(games, function(game){ return game.room == room; });
+    if (game) game.now = new Date().getTime();
+    return game;
 };
 
 
