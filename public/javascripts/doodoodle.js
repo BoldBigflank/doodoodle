@@ -61,7 +61,7 @@ app.controller('GameCtrl', function ($scope, $timeout, $interval, socket) {
     var shiftedEnd = $scope.game.end - $scope.timeDifference;
 
     var percentage =  100 * (shiftedEnd - now) / (shiftedEnd - shiftedBegin);
-    $scope.progressStyle = "{width: " + parseInt(percentage) + "%}";
+    $scope.progressStyle = "width: " + percentage + "%;";
     // $scope.progressStyle = "{color:'red'}";
     console.log("progressStyle " + $scope.progressStyle);
     
