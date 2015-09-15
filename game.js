@@ -318,13 +318,18 @@ exports.getScoreboard = function(){
         title: game.title
         , scores: _.map(game.players, function(val, key){ return { id:val.id, name:val.name, score:val.score }; })
         , players: game.players.length
-    }
+    };
 
-}
+};
 
 exports.reset = function(cb){
     init()
-    cb(null, game)
-}
+    cb(null, game);
+};
 
-init()
+init();
+
+// A Debug DRAW room
+drawGame = newGame("12345");
+drawGame.room = "DRAW";
+drawGame.state = STATE.DRAW;
