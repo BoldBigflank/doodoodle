@@ -40,7 +40,7 @@ app.factory('socket', function ($rootScope) {
 
 app.controller('GameCtrl', function ($scope, $timeout, socket) {
   $scope.playerId = 0;
-  $scope.joinData = {"name":"Alex", "room":"TEST"}; // DEBUG DATA
+  $scope.joinData = {"name":"Alex", "room":"DRAW"}; // DEBUG DATA
   $scope.player = null;
   $scope.isPlayer = isPlayer;
   $scope.playerName = "";
@@ -59,7 +59,6 @@ app.controller('GameCtrl', function ($scope, $timeout, socket) {
     for (var x in $scope.game.players) {
       var p = $scope.game.players[x];
       if(p.id == $scope.playerId){
-        console.log("Found player I am");
         $scope.player = p;
         break;
       }
@@ -135,7 +134,8 @@ app.controller('GameCtrl', function ($scope, $timeout, socket) {
 
 app.directive("drawing", function ($document, socket) {
   return {
-    template: "<canvas ng-class='{\"bg-primary\": drawing.votes.indexOf(io().id) != -1 }' width={{width}}px height={{height}}px scale={{scale}} resize ng-style='style()' class='drawing'></canvas>" +
+    template: "<table ng-show='{{position}} <= 0' style='margin:auto;' class=''> <tr style='height:25px'> <td ng-repeat='c in colors' bgcolor='{{c}}' ng-class='{\"colorPicked\": c == color }' width=25px ng-click='changeColor(c)'> </tr> </table>" +
+      "<canvas ng-class='{\"bg-primary\": drawing.votes.indexOf(io().id) != -1 }' width={{width}}px height={{height}}px scale={{scale}} resize ng-style='style()' class='drawing'></canvas>" +
       "<button ng-show='{{position}} <= 0' class='btn btn-block btn-default text-uppercase' ng-click='submitPicture()' type='submit'>Submit</button>",
     restrict: "A",
     transclude: true,
@@ -146,11 +146,26 @@ app.directive("drawing", function ($document, socket) {
       "position": "=position"
     },
     link: function (scope, element, attrs) {
+      scope.colors = [
+        '#1F75FE',
+        '#1CAC78',
+        '#EE204D',
+        '#FCE883',
+        '#B4674D',
+        '#FF7538',
+        '#926EAE',
+        '#0D98BA',
+        '#FFAACC',
+        '#C5E384',
+        '#FFAE42',
+        '#FFFFFF',
+        ];
+      scope.color = "#1F75FE";
+
       if (!position) position = -1;
       // The canvas
-      console.log("element", element);
-      var canvas = element[0].firstChild;
-      var ctx = element[0].firstChild.getContext('2d');
+      var canvas = element[0].getElementsByTagName('canvas')[0];
+      var ctx = element[0].getElementsByTagName('canvas')[0].getContext('2d');
 
       // The stored lines
       var drawing = {
@@ -167,13 +182,13 @@ app.directive("drawing", function ($document, socket) {
       var editable = (position <= 0);
       var isDrawing = false;
       var submitted = false;
+      
 
+      scope.changeColor = function(newColor){
+        scope.color = newColor;
+      };
 
       var canvasCoord = function (coord) {
-        // Modify it based on its scale
-        // coord.x -= canvas.getBoundingClientRect().left
-        // coord.y -= canvas.getBoundingClientRect().top
-
         // Modify it based on the canvas's scale
         coord.x *= (canvas.width / parseInt(canvas.style.width, 10));
         coord.y *= (canvas.height / parseInt(canvas.style.height, 10));
@@ -185,9 +200,9 @@ app.directive("drawing", function ($document, socket) {
       };
 
       // Drawing functions
-      var startLine = function (coord) {
+      var startLine = function (coord, color) {
         // line style
-        ctx.strokeStyle = "#df4b26";
+        ctx.strokeStyle = (color) ? color : scope.color;
         ctx.lineJoin = "round";
         ctx.lineCap = 'round';
         ctx.lineWidth = 5;
@@ -210,8 +225,14 @@ app.directive("drawing", function ($document, socket) {
       var draw = function (lines) {
         for (var x in lines) {
           var line = lines[x];
+          var color = "#000"; // Start with black
+          if('color' in line){
+            // If we have color data
+            color = line.color;
+            line = line.points;
+          }
           if ( line[0] === undefined ) return;
-          startLine(line[0]);
+          startLine(line[0], color);
           for (var y in line) {
             var point = line[y];
             drawLine(point);
@@ -241,7 +262,7 @@ app.directive("drawing", function ($document, socket) {
             "y": event.layerY
           });
         }
-        startLine(coord);
+        startLine(coord, null);
 
         // start a new line for saving
         currentLine = [coord];
@@ -284,7 +305,7 @@ app.directive("drawing", function ($document, socket) {
           // Push the line for saving
           // $scope.linesArray.push(currentLine);
           if (!drawing.lines) drawing.lines = [];
-          drawing.lines.push(currentLine);
+          drawing.lines.push({"color":scope.color, "points":currentLine});
           // console.log(JSON.stringify(linesArray));
           // $scope.$digest();
         }

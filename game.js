@@ -225,7 +225,8 @@ exports.saveDrawing = function(uuid, room, data, cb){
         game.votingRound = 0;
     }
     // EXTRA Put a line from the drawing into the seeds
-    seeds.push([_.sample(data.lines)]);
+    var seedLine = _.sample(data.lines);
+    seeds.push([seedLine.points]);
     cb(null, game);
 
 };
