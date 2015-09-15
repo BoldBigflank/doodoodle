@@ -4,6 +4,9 @@ var EventEmitter = require('events').EventEmitter;
 
 exports.eventEmitter = new EventEmitter();
 
+// var prepTime = 2 * 1000;
+var drawTime = 120 * 1000;
+var voteTime = 10 * 1000;
 
 var games = [];
 var rooms = [];
@@ -65,7 +68,10 @@ var newGame = function (host, cb) {
         state:STATE.PREP,
         votingRound:-1,
         room:newRoom(),
-        host:host
+        host:host,
+        begin:null,
+        end:null,
+        now:null
     };
     games.push(game);
     return game;
@@ -182,6 +188,15 @@ exports.join = function(uuid, name, room, cb){
     players.push(player); // All players
     game.players.push(player); // Players for the game
     
+    // DEBUG
+    if(game.room == "DRAW"){
+      // Set the timer
+      var now = new Date().getTime(); // Milliseconds
+      game.begin = now;
+      game.end = now + drawTime;
+      game.now = now;
+    }
+
     cb(null, game);
 };
 
@@ -195,6 +210,12 @@ exports.start = function(room, cb){
     game.state = STATE.DRAW;
     newRound(game);
 
+    // TODO: Start and end times
+    var now = new Date().getTime(); // Milliseconds
+    game.begin = now;
+    game.end = now + drawTime;
+    game.now = now;
+    
     cb(null, game);
 };
 
@@ -223,6 +244,12 @@ exports.saveDrawing = function(uuid, room, data, cb){
         _.each(game.players, function(element, index, list) {element.complete = false;});
         game.state = STATE.VOTE;
         game.votingRound = 0;
+        // Set the timer
+        var now = new Date().getTime(); // Milliseconds
+        game.begin = now;
+        game.end = now + voteTime;
+        game.now = now;
+        
     }
     // EXTRA Put a line from the drawing into the seeds
     var seedLine = _.sample(data.lines);
@@ -263,6 +290,12 @@ exports.vote = function(uuid, room, votingRound, position, cb){
         console.log("Next voting round");
         _.each(game.players, function(element, index, list) {element.voted = false;});
         game.votingRound += 1;
+        // TODO: Reset the start/end times
+        var now = new Date().getTime(); // Milliseconds
+        game.begin = now;
+        game.end = now + voteTime;
+        game.now = now;
+        
     }
     if(game.votingRound >= activePlayers.length){
         updateScores(game);

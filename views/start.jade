@@ -99,7 +99,7 @@ block content
                     div(width=450, height=600, scale=0.75, position=-1, drawing )
                   .col-xs-12
                     .progress
-                      .progress-bar(role="progressbar")
+                      .progress-bar(role="progressbar", aria-valuenow="60", aria-valuemin="0", aria-valuemax="100", ng-style="progressStyle" )
                 //- Draw - Complate
                 .header(ng-class="game-panel", ng-show="game.state.name == 'draw' && player.complete", state="draw")
                   h3.text-center Done

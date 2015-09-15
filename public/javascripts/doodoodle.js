@@ -38,7 +38,7 @@ app.factory('socket', function ($rootScope) {
   };
 });
 
-app.controller('GameCtrl', function ($scope, $timeout, socket) {
+app.controller('GameCtrl', function ($scope, $timeout, $interval, socket) {
   $scope.playerId = 0;
   $scope.joinData = {"name":"Alex", "room":"DRAW"}; // DEBUG DATA
   $scope.player = null;
@@ -47,11 +47,27 @@ app.controller('GameCtrl', function ($scope, $timeout, socket) {
   $scope.room = "";
   $scope.errors = [];
   $scope.drawingData = "drawingData";
+  $scope.timeDifference = 0;
     
   var popError = function(){
     $scope.errors.shift();
     $scope.$digest();
   };
+
+  var updateTime = function(){
+    if(!$scope.game.begin) return;
+    var now = new Date().getTime();
+    var shiftedBegin = $scope.game.begin - $scope.timeDifference;
+    var shiftedEnd = $scope.game.end - $scope.timeDifference;
+
+    var percentage =  100 * (shiftedEnd - now) / (shiftedEnd - shiftedBegin);
+    $scope.progressStyle = "{width: " + parseInt(percentage) + "%}";
+    // $scope.progressStyle = "{color:'red'}";
+    console.log("progressStyle " + $scope.progressStyle);
+    
+  };
+
+  $interval(updateTime, 1000);
 
   $scope.loadGame = function (gameData) {
     $scope.game = gameData;
@@ -63,6 +79,10 @@ app.controller('GameCtrl', function ($scope, $timeout, socket) {
         break;
       }
     }
+
+    // Check the time difference
+    $scope.timeDifference = gameData.now - new Date().getTime();
+
     $scope.$digest();
   };
 
