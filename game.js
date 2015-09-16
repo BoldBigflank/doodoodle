@@ -66,6 +66,8 @@ var newGame = function (host, cb) {
         players:[],
         turn:null,
         state:STATE.PREP,
+        roundNumber:0,
+        theme:pickTheme(),
         votingRound:-1,
         room:newRoom(),
         host:host,
@@ -120,6 +122,7 @@ var newRound = function (game) {
 
         votingRound++;
     }
+
     game.round = round;
 };
 
@@ -127,6 +130,10 @@ var newDrawingSeeds = function(count) {
     // var debugSeed = [[{"x":"159.81","y":"124.37"},{"x":"159.81","y":"125.21"},{"x":"159.81","y":"183.19"},{"x":"159.81","y":"195.80"},{"x":"159.81","y":"209.24"},{"x":"159.81","y":"222.69"},{"x":"159.81","y":"242.02"},{"x":"159.81","y":"249.58"},{"x":"159.81","y":"262.18"},{"x":"159.81","y":"268.91"},{"x":"159.81","y":"273.11"},{"x":"159.81","y":"273.95"},{"x":"159.81","y":"276.47"},{"x":"159.81","y":"277.31"},{"x":"159.81","y":"278.99"},{"x":"159.81","y":"279.83"},{"x":"159.81","y":"280.67"},{"x":"160.65","y":"280.67"},{"x":"161.50","y":"280.67"},{"x":"161.50","y":"280.67"},{"x":"162.34","y":"280.67"},{"x":"163.18","y":"280.67"},{"x":"164.02","y":"280.67"},{"x":"164.02","y":"279.83"},{"x":"167.38","y":"279.83"},{"x":"171.59","y":"278.99"},{"x":"177.48","y":"278.99"},{"x":"183.36","y":"278.99"},{"x":"188.41","y":"278.99"},{"x":"190.93","y":"278.99"},{"x":"194.30","y":"278.99"},{"x":"198.50","y":"278.99"},{"x":"202.71","y":"278.99"},{"x":"206.07","y":"279.83"},{"x":"208.60","y":"282.35"},{"x":"211.12","y":"283.19"},{"x":"211.96","y":"283.19"},{"x":"211.96","y":"284.03"},{"x":"212.80","y":"284.03"},{"x":"212.80","y":"284.03"}]]
     // return debugSeed;
     return _.sample(seeds, count);
+}
+
+var pickTheme = function(){
+    return _.sample(["sports", "animals", "travel", "people", "music", "events"]);
 }
 
 var updateScores = function(game){
@@ -210,6 +217,7 @@ exports.start = function(room, cb){
     if(game.state != STATE.PREP && game.state != STATE.RESULT) return cb("Now is not the time to start a new round");
 
     game.state = STATE.DRAW;
+    game.gameRound++;
     newRound(game);
 
     // TODO: Start and end times

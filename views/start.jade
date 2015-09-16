@@ -47,7 +47,8 @@ block content
                 a(href="/player")
                   button.btn.btn-default.btn-xs(type='button') Wait, I'm a player!
               div.col-sm-12.text-center(ng-show="game.state.name == 'draw'")
-                h2 Draw Phase
+                h2 Round {{game.roundNumber}}
+                h3(ng-show="game.roundNumber == 3") Theme: {{game.theme}}
                 h3 On your device, add to the picture
                 h4 Make it funny, cool, whatever
               div.col-sm-12.text-center(ng-show="game.state.name == 'vote'")
@@ -94,7 +95,8 @@ block content
                   button.btn.btn-block.btn-default.text-uppercase(ng-click="action('start')",type='submit') Start
                 //- Draw
                 .header(ng-class="game-panel", ng-show="game.state.name == 'draw' && !player.complete", state="draw")
-                  h3.text-center Draw
+                  h3.text-center(ng-hide="game.roundNumber == 3") Draw
+                  h3.text-center(ng-show="game.roundNumber == 3") Theme: {{game.theme}}
                   .cols-sm-12
                     div(width=450, height=600, scale=0.75, position=-1, drawing )
                   .col-xs-12
@@ -107,7 +109,8 @@ block content
                     h3 You did it! Now wait on everyone else.
                 //- Vote
                 .draw(ng-class="game-panel", ng-show="game.state.name == 'vote' && !player.voted", state="vote")
-                  h3 Pick your favorite
+                  h3.text-center(ng-hide="game.roundNumber == 3") Vote
+                  h3.text-center(ng-show="game.roundNumber == 3") Theme: {{game.theme}}
                   .col-md-6(width=450, height=600, drawing, resize, scale=0.4, position=1)
                   .col-md-6(width=450, height=600, drawing, resize, scale=0.4, position=2)
                 //- Vote - complete
