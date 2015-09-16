@@ -66,7 +66,7 @@ var newGame = function (host, cb) {
         players:[],
         turn:null,
         state:STATE.PREP,
-        roundNumber:0,
+        round:0,
         theme:pickTheme(),
         votingRound:-1,
         room:newRoom(),
@@ -87,7 +87,7 @@ var getGame = function (room) {
 
 
 var newRound = function (game) {
-    var round = []; // An array of Drawing objects
+    var drawings = []; // An array of Drawing objects
     // Give every active player two starting doodles
 
     var activePlayers = _.where(game.players, {state: "active"});
@@ -107,7 +107,7 @@ var newRound = function (game) {
             lines: null,
             votes: [player.id]
         };
-        round.push(drawing);
+        drawings.push(drawing);
 
         partnerId = activePlayers[(p+1) % activePlayers.length ].id;
         var drawing2 = {
@@ -118,12 +118,12 @@ var newRound = function (game) {
             lines: null,
             votes: [partnerId]
         };
-        round.push(drawing2);
+        drawings.push(drawing2);
 
         votingRound++;
     }
 
-    game.round = round;
+    game.drawings = drawings;
 };
 
 var newDrawingSeeds = function(count) {
@@ -137,8 +137,8 @@ var pickTheme = function(){
 }
 
 var updateScores = function(game){
-    for(x in game.round){
-        var drawing = game.round[x];
+    for(x in game.drawings){
+        var drawing = game.drawings[x];
         var player = _.find(game.players, {"id":drawing.playerId});
         player.score += drawing.votes.length-1;
     }
@@ -217,10 +217,15 @@ exports.start = function(room, cb){
     if(game.state != STATE.PREP && game.state != STATE.RESULT) return cb("Now is not the time to start a new round");
 
     game.state = STATE.DRAW;
-    game.gameRound++;
+    if( game.round >= 3 ){
+        _.each(game.players, function(player){
+            player.score = 0;
+        });
+        game.round = 0;
+    }
+    game.round++;
     newRound(game);
 
-    // TODO: Start and end times
     var now = new Date().getTime(); // Milliseconds
     game.begin = now;
     game.end = now + drawTime;
@@ -235,21 +240,21 @@ exports.saveDrawing = function(uuid, room, data, cb){
     if(!game) return cb("game not found", null);
     var player = _.findWhere( game.players, {id: uuid} );
     if(!player) return cb("player not found", null);
-    var drawing = _.findWhere( game.round, {playerId: player.id, votingRound: data.votingRound, position: data.position});
+    var drawing = _.findWhere( game.drawings, {playerId: player.id, votingRound: data.votingRound, position: data.position});
     if(!drawing) { return cb("You are not a part of this round", null); }
     drawing.lines = drawingData;
     // drawing.votes = [drawing.player];
     console.log("drawing saved");
     // If it's the last drawing needed, go to Vote round
-    console.log(game.round);
+    console.log(game.drawings);
     
     // Determine whether to set the player's complete variable
-    if (_.findWhere( game.round, {lines: null, playerId:player.id} ) === undefined) {
+    if (_.findWhere( game.drawings, {lines: null, playerId:player.id} ) === undefined) {
         console.log("player drawings collected");
         player.complete = true;
     }
 
-    if (_.findWhere( game.round, {lines: null} ) === undefined) {
+    if (_.findWhere( game.drawings, {lines: null} ) === undefined) {
         console.log("all drawings collected");
         _.each(game.players, function(element, index, list) {element.complete = false;});
         game.state = STATE.VOTE;
@@ -274,7 +279,7 @@ exports.vote = function(uuid, room, votingRound, position, cb){
     if(game.votingRound != votingRound) return cb("Too late, wrong round");
     var player = _.findWhere( game.players, {id: uuid} );
     if(!player) return cb("player not found", null);
-    var drawingsThisRound = _.where(game.round, {votingRound:votingRound});
+    var drawingsThisRound = _.where(game.drawings, {votingRound:votingRound});
     var allVotes = _.flatten(_.pluck(drawingsThisRound, 'votes'));
     console.log("all votes", allVotes);
     var hasVoted = _.contains(allVotes, uuid);
@@ -283,7 +288,7 @@ exports.vote = function(uuid, room, votingRound, position, cb){
     // });
     console.log("hasVoted", hasVoted);
     if(hasVoted) return cb("You've already voted this round");
-    var drawing = _.findWhere(game.round, {votingRound:votingRound, position:position});
+    var drawing = _.findWhere(game.drawings, {votingRound:votingRound, position:position});
     
     // TODO: Check the other drawings for votes this round
     if(drawing.votes === null) drawing.votes = [drawing.playerId];
