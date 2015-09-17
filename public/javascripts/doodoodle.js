@@ -2,7 +2,7 @@
 // var socket = io.connect('http://localhost:3000');
 // var socket = io.connect('http://192.168.29.235:3000');
 // Angular
-var app = angular.module('doodoodleApp', []);
+var app = angular.module('doodoodleApp', ['ngCookies']);
 
 app.factory('socket', function ($rootScope) {
   var socket = io.connect(); // Production
@@ -38,7 +38,7 @@ app.factory('socket', function ($rootScope) {
   };
 });
 
-app.controller('GameCtrl', function ($scope, $timeout, $interval, socket) {
+app.controller('GameCtrl', function ($scope, $timeout, $interval, $cookies, socket) {
   $scope.playerId = 0;
   $scope.joinData = {"name":"Alex", "room":"DRAW"}; // DEBUG DATA
   $scope.player = null;
@@ -49,6 +49,15 @@ app.controller('GameCtrl', function ($scope, $timeout, $interval, socket) {
   $scope.drawingData = "drawingData";
   $scope.timeDifference = 0;
     
+  console.log("Cookie Name:", $cookies.name);
+  if($cookies.name){
+    $scope.joinData.name = $cookies.name;
+  }
+  if($cookies.room){
+    $scope.joinData.room = $cookies.room;
+  }
+
+
   var popError = function(){
     $scope.errors.shift();
     $scope.$digest();
@@ -103,6 +112,12 @@ app.controller('GameCtrl', function ($scope, $timeout, $interval, socket) {
       if (!err) {
         console.log("joined", data);
         $scope.loadGame(data.game);
+
+        // Set the cookies
+        $cookies.playerId = $scope.playerId;
+        $cookies.name = $scope.joinData.name;
+        $cookies.room = $scope.joinData.room;
+        console.log("Cookie Name:", $cookies.name);
       }
       $scope.$digest();
     });
