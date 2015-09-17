@@ -32,6 +32,7 @@ var newRoom = function () {
     while (roomString.length < 4) {
         roomString += validCharacters.substr(Math.floor(Math.random()*validCharacters.length), 1);
     }
+    // TODO: Check the database to prevent duplicate game rooms
 
     return roomString;
 };
@@ -72,6 +73,11 @@ var getGame = function (room, cb) {
 var postGame = function (game) {
     var gameRef = new Firebase("https://doodoodle.firebaseio.com/games/" + game.room);
     gameRef.set(game);
+};
+
+var deleteGame = function(game) {
+  var gameRef = new Firebase("https://doodoodle.firebaseio.com/games/" + game.room);
+  gameRef.set(null);
 };
 
 
@@ -172,6 +178,7 @@ exports.host = function(uuid, cb){
     }
 
     game = newGame(uuid);
+    setPlayerToGame(uuid, game.room);
     // var game = _.find(games, function(game){ return game.host == uuid });
     // if(typeof game == "undefined") {
     //     game = newGame(uuid);
@@ -205,14 +212,21 @@ exports.join = function(uuid, name, room, cb){
                 , score: 0
                 , room: room
                 , waiting: false
+                , role: 'player'
             }
             // Take a hand of cards from the deck
             setPlayerToGame(player.id, game.room);
         }
-        // if(_.where(game.players, {state:'active'}).length >= maxPlayers) player.state = 'spectating';
+        if(_.where(game.players, {state:'active'}).length >= maxPlayers) player.state = 'spectator';
 
         // players.push(player); // All players
-        if(!game.players) game.players = [];
+        if(!game.players){ 
+          game.players = [];
+          // Player 1 gets to be a leader
+          // player.role = "leader";
+        }
+        if(_.where(game.players, {state:'active'}).length >= maxPlayers) player.state = 'spectator';
+
         game.players.push(player); // Players for the game
         
         // DEBUG
@@ -313,7 +327,6 @@ exports.vote = function(uuid, room, votingRound, position, cb){
         if(hasVoted) return cb("You've already voted this round");
         var drawing = _.findWhere(game.drawings, {votingRound:votingRound, position:position});
         
-        // TODO: Check the other drawings for votes this round
         if(drawing.votes === null) drawing.votes = [drawing.playerId];
         drawing.votes.push(uuid);
         player.waiting = true;
@@ -344,29 +357,26 @@ exports.vote = function(uuid, room, votingRound, position, cb){
     
 };
 
-exports.leave = function(room, uuid, cb){
-    getGame(room, function(game){
+exports.leave = function(uuid, room, cb){
+    getGame (room, function(game) {
         if(!game) return;
         // Remove their player
-        var player = _.findWith(game.players, {id:uuid});
+        var player = _.findWhere(game.players, {id:uuid});
         if(player){
-            if(player.state != "spectating") player.state = "disconnect";
-            // If only one active player left, end the round
-            if(game.state == "active"){
-                if(_.where(game.players, {state:'active'}).length <= 1)
-                    game.state = "ended";
-                else {
-                    while(_.findWhere(game.players, {position:game.turn}).state != 'active'){
-                        game.turn = (game.turn + game.direction) % game.players.length;
-                    }
-                }
-            } else if(game.state == "prep") {
-                // Remove players from games that haven't started
-                game.players = _.without(game.players, player);
+            // TODO: What should we do when a person leaves?
+            if(player.state == "active"){
+              player.state = "disconnect";
             }
+            
+            postGame(game);
             cb(null, {players: game.players, state: game.state, turn: game.turn});
         }
-        // game.players = _.without(game.players, player)
+        else if (game.host == uuid) {
+            console.log("Host has left, deleting game", room);
+            deleteGame(game);
+            cb(null);
+        }
+        
     });
     
 };

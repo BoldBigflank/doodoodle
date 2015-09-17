@@ -129,8 +129,12 @@ io.on('connection', function (socket) {
     socket.on('disconnect', function(){
         console.log("Socket", socket.id, "disconnected");
         doodoodle.playerToGame(socket.id, function(gameRoom){{}
-            doodoodle.leave(socket.id, function(){
-
+            doodoodle.leave(socket.id, gameRoom, function(err, game){
+                console.log(gameRoom, "--> Disconnect", socket.id);
+                if(game){
+                    io.to(gameRoom).emit('game', game);
+                    io.to(game.host).emit('event', {"event":"disconnect"});
+                }
             });
         });
     });
