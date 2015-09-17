@@ -341,6 +341,12 @@ exports.vote = function(uuid, room, votingRound, position, cb){
         if(votersLeft.length === 0) {
             _.each(game.players, function(element, index, list) {element.waiting = false;});
             game.votingRound += 1;
+            roundDrawings = _.pluck(game.drawings, {votingRound:game.votingRound});
+            _.each(roundDrawings, function(drawing){
+              var p = _.findWhere(game.players, {id:drawing.playerId});
+              p.waiting = true;
+            });
+
             // TODO: Reset the start/end times
             var now = new Date().getTime(); // Milliseconds
             game.begin = now;
