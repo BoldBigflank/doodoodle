@@ -49,12 +49,20 @@ app.controller('GameCtrl', function ($scope, $timeout, $interval, $cookies, sock
   $scope.drawingData = "drawingData";
   $scope.timeDifference = 0;
   
-  if($cookies.name){
-    $scope.joinData.name = $cookies.name;
+  if($cookies.get("name")){
+    $scope.joinData.name = $cookies.get("name");
   }
-  if($cookies.room){
-    $scope.joinData.room = $cookies.room;
+  if($cookies.get("room")){
+    $scope.joinData.room = $cookies.get("room");
   }
+  
+  var generatePlayerId = function(){
+    var id = '_' + Math.random().toString(36).substr(2, 9);
+    $cookies.put("playerId", id);
+    return id;
+  };
+
+  $scope.playerId = ($cookies.get("playerId")) ? $cookies.get("playerId") : generatePlayerId();
 
 
   var popError = function(){
@@ -72,6 +80,8 @@ app.controller('GameCtrl', function ($scope, $timeout, $interval, $cookies, sock
     $scope.progressStyle = "width: " + percentage + "%;";
     
   };
+
+  
 
   $interval(updateTime, 1000);
 
@@ -104,19 +114,15 @@ app.controller('GameCtrl', function ($scope, $timeout, $interval, $cookies, sock
 
   $scope.startPlayer = function () {
     $scope.player = true;
-    $scope.playerId = io().id;
-    $scope.joinData.oldId = $cookies.playerId; // Old ID if we have it
-    console.log("Name " + $scope.joinData.name);
-    console.log("room " + $scope.joinData.room);
-    socket.emit('join', $scope.joinData, function (err, data) {
+    $scope.joinData.playerId = $scope.playerId; // Old ID if we have it
+    socket.emit('join', $scope.joinData, function (err, game) {
       if (!err) {
-        console.log("joined", data);
-        $scope.loadGame(data.game);
+        console.log($scope.joinData.name, "joined", game.room);
+        $scope.loadGame(game);
 
         // Set the cookies
-        $cookies.playerId = $scope.playerId;
-        $cookies.name = $scope.joinData.name;
-        $cookies.room = $scope.joinData.room;
+        $cookies.put("name", $scope.joinData.name);
+        $cookies.put("room", $scope.joinData.room);
       }
       $scope.$digest();
     });

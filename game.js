@@ -151,18 +151,18 @@ var updateScores = function(game){
     }
 };
 
-var setPlayerToGame = function(playerId, gameRoom, cb){
-    var playerRef = new Firebase("https://doodoodle.firebaseio.com/players/" + playerId);
-    playerRef.set(gameRoom, cb);
+var setSocketToGame = function(socketId, playerId, gameRoom, cb){
+    var playerRef = new Firebase("https://doodoodle.firebaseio.com/players/" + socketId);
+    playerRef.set({playerId:playerId, gameRoom:gameRoom}, cb);
 };
 
-exports.playerToGame = function(playerId, cb){
-    var playerRef = new Firebase("https://doodoodle.firebaseio.com/players/" + playerId);
+exports.socketToGame = function(socketId, cb){
+    var playerRef = new Firebase("https://doodoodle.firebaseio.com/players/" + socketId);
     playerRef.once("value", function(data){
-        console.log("Player:", playerId, "Game:", data.val());
+        console.log("Socket:", socketId, "Game:", data.val());
         cb(data.val());
     });
-    // return playerToGame[playerId];
+    // return socketToGame[playerId];
 };
 
 var pushSeed = function(seed, cb){
@@ -170,29 +170,29 @@ var pushSeed = function(seed, cb){
   seedRef.push(seed);
 }
 
-exports.host = function(uuid, cb){
+exports.host = function(playerId, cb){
     // Create a game, but do not add the player to it
-    if(uuid === undefined) {
-        cb("UUID not found");
+    if(playerId === undefined) {
+        cb("playerId not found");
         return;
     }
 
-    game = newGame(uuid);
-    setPlayerToGame(uuid, game.room);
-    // var game = _.find(games, function(game){ return game.host == uuid });
+    game = newGame(playerId);
+    setSocketToGame(playerId, null, game.room);
+    // var game = _.find(games, function(game){ return game.host == playerId });
     // if(typeof game == "undefined") {
-    //     game = newGame(uuid);
+    //     game = newGame(playerId);
     // }
     postGame(game); // Export to Firebase
     cb(null, game);
 }
 
-exports.join = function(uuid, data, cb){
+exports.join = function(socketId, data, cb){
     var name = data.name;
     var room = data.room;
-    var oldId = data.oldId;
-    if(uuid === undefined) {
-        cb("UUID not found");
+    var playerId = data.playerId;
+    if(socketId === undefined) {
+        cb("socketId not found");
         return;
     }
     room = room.toUpperCase();
@@ -202,15 +202,17 @@ exports.join = function(uuid, data, cb){
             return;
         }
         // game.now = new Date().getTime()
-        if(oldId){
-            var player = _.findWhere( game.players, {id: oldId} );
-            if(player) player.id = uuid;
-            player.name = name;
-            setPlayerToGame(oldId, null);
+        if(!playerId){
+            cb("playerId not found");
+            return;
         }
+
+        var player = _.findWhere( game.players, {id: playerId} );
+        if(player) player.name = name;
+        
         if( typeof player === 'undefined'){
             var player = {
-                id: uuid,
+                id: playerId,
                 name: name,
                 state: 'active',
                 score: 0,
@@ -220,14 +222,14 @@ exports.join = function(uuid, data, cb){
             };
             
             if(_.where(game.players, {role:'player', state:'active'}).length >= maxPlayers) player.role = 'spectator';
-            // players.push(player); // All players
+
             if(!game.players){ 
               game.players = [];
             }
 
             game.players.push(player); // Players for the game
         }
-        setPlayerToGame(player.id, game.room);
+        setSocketToGame(socketId, player.id, game.room);
         player.state = "active"; // They've joined or rejoined
 
         // DEBUG
@@ -272,10 +274,10 @@ exports.start = function(room, cb){
     });
 };
 
-exports.saveDrawing = function(uuid, room, data, cb){
+exports.saveDrawing = function(playerId, room, data, cb){
     getGame(room, function(game){
         if(!game) return cb("game not found", null);
-        var player = _.findWhere( game.players, {id: uuid} );
+        var player = _.findWhere( game.players, {id: playerId} );
         if(!player) return cb("player not found", null);
         var drawing = _.findWhere( game.drawings, {playerId: player.id, votingRound: data.votingRound, position: data.position});
         if(!drawing) { return cb("You are not a part of this round", null); }
@@ -314,29 +316,29 @@ exports.saveDrawing = function(uuid, room, data, cb){
 
 };
 
-exports.vote = function(uuid, room, votingRound, position, cb){
+exports.vote = function(playerId, room, votingRound, position, cb){
     getGame(room, function(game){
         if(!game) return cb("game not found", null);
         if(game.votingRound != votingRound) return cb("Too late, wrong round");
-        var player = _.findWhere( game.players, {id: uuid} );
+        var player = _.findWhere( game.players, {id: playerId} );
         if(!player) return cb("player not found", null);
         var drawingsThisRound = _.where(game.drawings, {votingRound:votingRound});
         var allVotes = _.flatten(_.pluck(drawingsThisRound, 'votes'));
-        var hasVoted = _.contains(allVotes, uuid);
+        var hasVoted = _.contains(allVotes, playerId);
         // _.find(drawingsThisRound, function(drawing){
-        //     return _.contains(drawing.votes, uuid);
+        //     return _.contains(drawing.votes, playerId);
         // });
         if(hasVoted) return cb("You've already voted this round");
         var drawing = _.findWhere(game.drawings, {votingRound:votingRound, position:position});
         
         if(drawing.votes === null) drawing.votes = [drawing.playerId];
-        drawing.votes.push(uuid);
+        drawing.votes.push(playerId);
         player.waiting = true;
         // Check here to move to the next voting round/Result phase
         var activePlayers = _.pluck(_.where(game.players, {role:'player', state: "active"}), 'id');
 
         // If there are no active players not in the allVotes list, continue
-        var votersLeft = _.difference(activePlayers, allVotes, [uuid]);
+        var votersLeft = _.difference(activePlayers, allVotes, [playerId]);
         
         if(votersLeft.length === 0) {
             _.each(game.players, function(element, index, list) {element.waiting = false;});
@@ -365,11 +367,11 @@ exports.vote = function(uuid, room, votingRound, position, cb){
     
 };
 
-exports.leave = function(uuid, room, cb){
+exports.leave = function(playerId, room, cb){
     getGame (room, function(game) {
         if(!game) return;
         // Remove their player
-        var player = _.findWhere(game.players, {id:uuid});
+        var player = _.findWhere(game.players, {id:playerId});
         if(player){
             // TODO: What should we do when a person leaves?
             if(player.state == "active"){
@@ -378,8 +380,9 @@ exports.leave = function(uuid, room, cb){
             
             postGame(game);
             cb(null, {players: game.players, state: game.state, turn: game.turn});
+            setSocketToGame(playerId, null, null);
         }
-        else if (game.host == uuid) {
+        else if (game.host == playerId) {
             console.log("Host has left, deleting game", room);
             deleteGame(game);
             cb(null);
@@ -395,7 +398,7 @@ exports.getScores = function(){
 
 // exports.getPlayers = function(){ return players }
 
-// exports.getPlayer = function(uuid){ return _.find(players, function(player){ return player.id == uuid })}
+// exports.getPlayer = function(playerId){ return _.find(players, function(player){ return player.id == playerId })}
 
 exports.getState = function(){ return game.state }
 
