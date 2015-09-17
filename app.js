@@ -62,6 +62,7 @@ io.on('connection', function (socket) {
                 socket.join(res.room);
                 console.log(res.room, "--> Player", data.name, "joined");
                 io.to(res.room).emit('game', res );
+
                 io.to(res.host).emit('event', {"event":"join"});
             }
           cb(null, { game: res });
@@ -84,49 +85,54 @@ io.on('connection', function (socket) {
 
     // Player calls to start the game
     socket.on('start', function(data, cb){
-        var gameRoom = doodoodle.playerToGame(socket.id);
-        doodoodle.start(gameRoom, function(err, game){
-            if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
-            else {
-                console.log(gameRoom, "--> Start", socket.id);
-                // send the game in its new state
-                io.to(gameRoom).emit('game', game);
-                // Since it's a new round, send the round on the round channel
-                // io.to(gameRoom).emit('round', game.round);
-                io.to(game.host).emit('event', {"event":"start"});
-            }
+        doodoodle.playerToGame(socket.id, function(gameRoom){
+            doodoodle.start(gameRoom, function(err, game){
+                if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
+                else {
+                    console.log(gameRoom, "--> Start", socket.id);
+                    // send the game in its new state
+                    io.to(gameRoom).emit('game', game);
+                    // Since it's a new round, send the round on the round channel
+                    // io.to(gameRoom).emit('round', game.round);
+                    io.to(game.host).emit('event', {"event":"start"});
+                }
+            });
         });
+        
 
     });
 
     socket.on('drawing', function(data, cb){
-        var gameRoom = doodoodle.playerToGame(socket.id);
-        doodoodle.saveDrawing(socket.id, gameRoom, data, function(err, game){
-            if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
-            console.log(gameRoom, "--> Drawing", socket.id);
-            io.to(gameRoom).emit('game', game);
-            io.to(game.host).emit('event', {"event":"drawing"});
-            return cb(null, game); // Should we be sending the game back?
+        doodoodle.playerToGame(socket.id, function(gameRoom){
+            doodoodle.saveDrawing(socket.id, gameRoom, data, function(err, game){
+                if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
+                console.log(gameRoom, "--> Drawing", socket.id);
+                io.to(gameRoom).emit('game', game);
+                io.to(game.host).emit('event', {"event":"drawing"});
+                return cb(null, game); // Should we be sending the game back?
+            });
         });
     });
 
     socket.on('vote', function(data, cb){
         console.log("vote received", JSON.stringify(data));
-        var gameRoom = doodoodle.playerToGame(socket.id);
-        doodoodle.vote(socket.id, gameRoom, data.votingRound, data.position, function(err, game){
-            if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
-            console.log(gameRoom, "--> Vote", data.votingRound, data.position);
-            io.to(gameRoom).emit('game', game);
-            io.to(game.host).emit('event', {"event":"vote"});
+        doodoodle.playerToGame(socket.id, function(gameRoom){
+            doodoodle.vote(socket.id, gameRoom, data.votingRound, data.position, function(err, game){
+                if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
+                console.log(gameRoom, "--> Vote", data.votingRound, data.position);
+                io.to(gameRoom).emit('game', game);
+                io.to(game.host).emit('event', {"event":"vote"});
+            });
         });
     });
 
     // User Leaves
     socket.on('disconnect', function(){
         console.log("Socket", socket.id, "disconnected");
-        var gameRoom = doodoodle.playerToGame(socket.id);
-        doodoodle.leave(socket.id, function(){
+        doodoodle.playerToGame(socket.id, function(gameRoom){{}
+            doodoodle.leave(socket.id, function(){
 
+            });
         });
     });
 

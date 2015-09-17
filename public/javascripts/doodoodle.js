@@ -55,15 +55,13 @@ app.controller('GameCtrl', function ($scope, $timeout, $interval, socket) {
   };
 
   var updateTime = function(){
-    if(!$scope.game.begin) return;
+    if(!$scope.game) return;
     var now = new Date().getTime();
     var shiftedBegin = $scope.game.begin - $scope.timeDifference;
     var shiftedEnd = $scope.game.end - $scope.timeDifference;
 
     var percentage =  100 * (shiftedEnd - now) / (shiftedEnd - shiftedBegin);
     $scope.progressStyle = "width: " + percentage + "%;";
-    // $scope.progressStyle = "{color:'red'}";
-    console.log("progressStyle " + $scope.progressStyle);
     
   };
 
@@ -386,9 +384,9 @@ app.directive("drawing", function ($document, socket) {
         // Update the player seed
         if (position == -1) {
           console.log("Updating the main drawing");
-          gameDrawing = _.findWhere(gameData.round, {
+          gameDrawing = _.findWhere(gameData.drawings, {
             playerId: io().id,
-            lines: null
+            submitted: false
           });
           if (!gameDrawing){
             console.log("No gameDrawing");
@@ -419,7 +417,7 @@ app.directive("drawing", function ($document, socket) {
           if (gameData.votingRound != drawing.votingRound) { // Voting round has changed
             console.log("Updating the voting one");
             votingRound = gameData.votingRound;
-            gameDrawing = _.findWhere(gameData.round, {
+            gameDrawing = _.findWhere(gameData.drawings, {
               position: position,
               votingRound: votingRound
             });
