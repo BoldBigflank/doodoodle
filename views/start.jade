@@ -29,12 +29,6 @@ block content
                           td {{$index + 1}}
                           td {{p.name}}
                           td {{p.score}}
-            //- canvas.drawing(width=450, height=600, drawing, resize, scale=0.5, ng-style="style()")
-            
-            //- //- Host display
-            //- div.row(ng-show="!isPlayer")
-            //-   .col-xs-12.text-center
-            //-     h3 Room {{game.room}}
 
             //- Host Controls
             div.row(ng-show="!isPlayer")
@@ -58,8 +52,6 @@ block content
               div.col-sm-12.text-center(ng-show="game.state.name == 'result'")
                 h2 Result Phase
                 h3 Here's who got what votes
-
-                
 
 
             //- Player Controls
@@ -146,6 +138,3 @@ block content
                 td {{$index + 1}}
                 td {{p.name}}
                 td {{p.score}}
-          //- h2 Players
-          //- .list-group
-          //-   a.list-group-item.active(ng-repeat='p in game.players') Player {{p.name}}

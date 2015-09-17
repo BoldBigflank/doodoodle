@@ -216,7 +216,7 @@ app.directive("drawing", function ($document, socket) {
         };
 
       // Drawing variables
-      var position = (attrs.position !== undefined) ? parseInt(attrs.position) : -1;
+      var position = (attrs.position !== undefined) ? parseInt(attrs.position, 10) : -1;
       var editable = (position <= 0);
       var isDrawing = false;
       var submitted = false;

@@ -133,10 +133,6 @@ var newDrawingSeeds = function(count, cb) {
       seeds = data.val();
       cb(_.sample(seeds, count));
     });
-
-    // var debugSeed = [[{"x":"159.81","y":"124.37"},{"x":"159.81","y":"125.21"},{"x":"159.81","y":"183.19"},{"x":"159.81","y":"195.80"},{"x":"159.81","y":"209.24"},{"x":"159.81","y":"222.69"},{"x":"159.81","y":"242.02"},{"x":"159.81","y":"249.58"},{"x":"159.81","y":"262.18"},{"x":"159.81","y":"268.91"},{"x":"159.81","y":"273.11"},{"x":"159.81","y":"273.95"},{"x":"159.81","y":"276.47"},{"x":"159.81","y":"277.31"},{"x":"159.81","y":"278.99"},{"x":"159.81","y":"279.83"},{"x":"159.81","y":"280.67"},{"x":"160.65","y":"280.67"},{"x":"161.50","y":"280.67"},{"x":"161.50","y":"280.67"},{"x":"162.34","y":"280.67"},{"x":"163.18","y":"280.67"},{"x":"164.02","y":"280.67"},{"x":"164.02","y":"279.83"},{"x":"167.38","y":"279.83"},{"x":"171.59","y":"278.99"},{"x":"177.48","y":"278.99"},{"x":"183.36","y":"278.99"},{"x":"188.41","y":"278.99"},{"x":"190.93","y":"278.99"},{"x":"194.30","y":"278.99"},{"x":"198.50","y":"278.99"},{"x":"202.71","y":"278.99"},{"x":"206.07","y":"279.83"},{"x":"208.60","y":"282.35"},{"x":"211.12","y":"283.19"},{"x":"211.96","y":"283.19"},{"x":"211.96","y":"284.03"},{"x":"212.80","y":"284.03"},{"x":"212.80","y":"284.03"}]]
-    // return debugSeed;
-    
 };
 
 var pickTheme = function(){
@@ -168,7 +164,7 @@ exports.socketToGame = function(socketId, cb){
 var pushSeed = function(seed, cb){
   var seedRef = new Firebase("https://doodoodle.firebaseio.com/seeds_list");
   seedRef.push(seed);
-}
+};
 
 exports.host = function(playerId, cb){
     // Create a game, but do not add the player to it
@@ -179,13 +175,9 @@ exports.host = function(playerId, cb){
 
     game = newGame(playerId);
     setSocketToGame(playerId, null, game.room);
-    // var game = _.find(games, function(game){ return game.host == playerId });
-    // if(typeof game == "undefined") {
-    //     game = newGame(playerId);
-    // }
     postGame(game); // Export to Firebase
     cb(null, game);
-}
+};
 
 exports.join = function(socketId, data, cb){
     var name = data.name;
@@ -201,7 +193,6 @@ exports.join = function(socketId, data, cb){
             cb("Room " + room + " not found");
             return;
         }
-        // game.now = new Date().getTime()
         if(!playerId){
             cb("playerId not found");
             return;
@@ -211,7 +202,7 @@ exports.join = function(socketId, data, cb){
         if(player) player.name = name;
         
         if( typeof player === 'undefined'){
-            var player = {
+            player = {
                 id: playerId,
                 name: name,
                 state: 'active',
@@ -223,7 +214,7 @@ exports.join = function(socketId, data, cb){
             
             if(_.where(game.players, {role:'player', state:'active'}).length >= maxPlayers) player.role = 'spectator';
 
-            if(!game.players){ 
+            if(!game.players){
               game.players = [];
             }
 
@@ -284,11 +275,6 @@ exports.saveDrawing = function(playerId, room, data, cb){
         drawing.lines = data.lines;
         drawing.submitted = true;
 
-        // Determine whether to set the player's waiting variable
-        // _.find(game.drawings, function(drawing){
-        //     return !('lines' in drawing); // 
-        // });
-
         if (_.findWhere( game.drawings, {submitted: false, playerId:player.id} ) === undefined) {
             player.waiting = true;
         }
@@ -325,9 +311,7 @@ exports.vote = function(playerId, room, votingRound, position, cb){
         var drawingsThisRound = _.where(game.drawings, {votingRound:votingRound});
         var allVotes = _.flatten(_.pluck(drawingsThisRound, 'votes'));
         var hasVoted = _.contains(allVotes, playerId);
-        // _.find(drawingsThisRound, function(drawing){
-        //     return _.contains(drawing.votes, playerId);
-        // });
+        
         if(hasVoted) return cb("You've already voted this round");
         var drawing = _.findWhere(game.drawings, {votingRound:votingRound, position:position});
         
@@ -393,38 +377,17 @@ exports.leave = function(playerId, room, cb){
 };
 
 exports.getScores = function(){
-    return _.map(game.players, function(val, key){ return { id:val.id, name:val.name, score:val.score }; })
-}
-
-// exports.getPlayers = function(){ return players }
-
-// exports.getPlayer = function(playerId){ return _.find(players, function(player){ return player.id == playerId })}
-
-exports.getState = function(){ return game.state }
-
-exports.getTitle = function(){ return game.title }
-
-exports.getRound = function(){ return game.round }
-
-
-exports.getWinner = function(){ return game.winner }
-
-exports.getScoreboard = function(){
-    return {
-        title: game.title
-        , scores: _.map(game.players, function(val, key){ return { id:val.id, name:val.name, score:val.score }; })
-        , players: game.players.length
-    };
-
+    return _.map(game.players, function(val, key){ return { id:val.id, name:val.name, score:val.score }; });
 };
 
+exports.getState = function(){ return game.state; };
+
+exports.getRound = function(){ return game.round; };
+
 exports.reset = function(cb){
-    // init()
     postGame(game); // Export to Firebase
     cb(null, game);
 };
-
-// init();
 
 // A Debug DRAW room
 drawGame = newGame("12345");

@@ -142,9 +142,4 @@ io.on('connection', function (socket) {
         });
     });
 
-    socket.on('onHover', function(data){
-        // Let the other players know what card they're hovering over
-
-    })
-
 });
