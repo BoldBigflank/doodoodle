@@ -89,70 +89,80 @@ var postGame = function (game) {
 };
 
 
-var newRound = function (game) {
+var newRound = function (game, cb) {
     var drawings = []; // An array of Drawing objects
     // Give every active player two starting doodles
 
     var activePlayers = _.where(game.players, {state: "active"});
     activePlayers = _.shuffle(activePlayers); // Randomize pairings
+    _.each(game.players, function(element, index, list) {element.waiting = false;});
 
     // For every active person in the players
     var votingRound = 0;
-    var roundSeeds = newDrawingSeeds(activePlayers.length);
-    for(var p in activePlayers){
-        var player = activePlayers[p];
-        
-        var drawing = {
-            playerId: player.id,
-            seed: roundSeeds[p],
-            position: 1,
-            votingRound: votingRound,
-            lines: null,
-            votes: [player.id],
-            submitted: false
-        };
-        drawings.push(drawing);
+    newDrawingSeeds(activePlayers.length, function(roundSeeds){
+      for(var p in activePlayers){
+          var player = activePlayers[p];
+          
+          var drawing = {
+              playerId: player.id,
+              seed: roundSeeds[p],
+              position: 1,
+              votingRound: votingRound,
+              lines: null,
+              votes: [player.id],
+              submitted: false
+          };
+          drawings.push(drawing);
 
-        partnerId = activePlayers[(p+1) % activePlayers.length ].id;
-        var drawing2 = {
-            playerId: partnerId,
-            seed: roundSeeds[p],
-            position: 2,
-            votingRound: votingRound,
-            lines: null,
-            votes: [partnerId],
-            submitted: false
-        };
-        drawings.push(drawing2);
+          partnerId = activePlayers[(p+1) % activePlayers.length ].id;
+          var drawing2 = {
+              playerId: partnerId,
+              seed: roundSeeds[p],
+              position: 2,
+              votingRound: votingRound,
+              lines: null,
+              votes: [partnerId],
+              submitted: false
+          };
+          drawings.push(drawing2);
 
-        votingRound++;
-    }
+          votingRound++;
+      }
 
-    game.drawings = drawings;
+      game.drawings = drawings;
+      cb(game);
+    });
+    
 };
 
-var newDrawingSeeds = function(count) {
+var newDrawingSeeds = function(count, cb) {
+    var seedRef = new Firebase("https://doodoodle.firebaseio.com/seeds_list");
+    seedRef.once("value", function(data){
+      seeds = data.val();
+      cb(_.sample(seeds, count));
+    });
+
     // var debugSeed = [[{"x":"159.81","y":"124.37"},{"x":"159.81","y":"125.21"},{"x":"159.81","y":"183.19"},{"x":"159.81","y":"195.80"},{"x":"159.81","y":"209.24"},{"x":"159.81","y":"222.69"},{"x":"159.81","y":"242.02"},{"x":"159.81","y":"249.58"},{"x":"159.81","y":"262.18"},{"x":"159.81","y":"268.91"},{"x":"159.81","y":"273.11"},{"x":"159.81","y":"273.95"},{"x":"159.81","y":"276.47"},{"x":"159.81","y":"277.31"},{"x":"159.81","y":"278.99"},{"x":"159.81","y":"279.83"},{"x":"159.81","y":"280.67"},{"x":"160.65","y":"280.67"},{"x":"161.50","y":"280.67"},{"x":"161.50","y":"280.67"},{"x":"162.34","y":"280.67"},{"x":"163.18","y":"280.67"},{"x":"164.02","y":"280.67"},{"x":"164.02","y":"279.83"},{"x":"167.38","y":"279.83"},{"x":"171.59","y":"278.99"},{"x":"177.48","y":"278.99"},{"x":"183.36","y":"278.99"},{"x":"188.41","y":"278.99"},{"x":"190.93","y":"278.99"},{"x":"194.30","y":"278.99"},{"x":"198.50","y":"278.99"},{"x":"202.71","y":"278.99"},{"x":"206.07","y":"279.83"},{"x":"208.60","y":"282.35"},{"x":"211.12","y":"283.19"},{"x":"211.96","y":"283.19"},{"x":"211.96","y":"284.03"},{"x":"212.80","y":"284.03"},{"x":"212.80","y":"284.03"}]]
     // return debugSeed;
-    return _.sample(seeds, count);
-}
+    
+};
 
 var pickTheme = function(){
     return _.sample(["sports", "animals", "travel", "people", "music", "events"]);
-}
+};
 
 var updateScores = function(game){
-    for(x in game.drawings){
+    for(var x in game.drawings){
         var drawing = game.drawings[x];
         var player = _.find(game.players, {"id":drawing.playerId});
         player.score += drawing.votes.length-1;
     }
-}
+};
 
 var setPlayerToGame = function(playerId, gameRoom, cb){
     var playerRef = new Firebase("https://doodoodle.firebaseio.com/players/" + playerId);
     playerRef.set(gameRoom, cb);
-}
+};
 
 exports.playerToGame = function(playerId, cb){
     var playerRef = new Firebase("https://doodoodle.firebaseio.com/players/" + playerId);
@@ -162,6 +172,11 @@ exports.playerToGame = function(playerId, cb){
     });
     // return playerToGame[playerId];
 };
+
+var pushSeed = function(seed, cb){
+  var seedRef = new Firebase("https://doodoodle.firebaseio.com/seeds_list");
+  seedRef.push(seed);
+}
 
 exports.host = function(uuid, cb){
     // Create a game, but do not add the player to it
@@ -203,15 +218,14 @@ exports.join = function(uuid, name, room, cb){
                 , position:-1
                 , score: 0
                 , room: room
-                , complete: false
-                , voted: false
+                , waiting: false
             }
             // Take a hand of cards from the deck
             setPlayerToGame(player.id, game.room);
         }
         // if(_.where(game.players, {state:'active'}).length >= maxPlayers) player.state = 'spectating';
 
-        players.push(player); // All players
+        // players.push(player); // All players
         if(!game.players) game.players = [];
         game.players.push(player); // Players for the game
         
@@ -244,15 +258,15 @@ exports.start = function(room, cb){
             game.round = 0;
         }
         game.round++;
-        newRound(game);
-
-        var now = new Date().getTime(); // Milliseconds
-        game.begin = now;
-        game.end = now + drawTime;
-        game.now = now;
-        
-        postGame(game); // Export to Firebase
-        cb(null, game);
+        newRound(game, function(game){
+          var now = new Date().getTime(); // Milliseconds
+          game.begin = now;
+          game.end = now + drawTime;
+          game.now = now;
+          
+          postGame(game); // Export to Firebase
+          cb(null, game);
+        });
     });
 };
 
@@ -266,19 +280,17 @@ exports.saveDrawing = function(uuid, room, data, cb){
         drawing.lines = data.lines;
         drawing.submitted = true;
 
-        // Determine whether to set the player's complete variable
+        // Determine whether to set the player's waiting variable
         // _.find(game.drawings, function(drawing){
         //     return !('lines' in drawing); // 
         // });
 
         if (_.findWhere( game.drawings, {submitted: false, playerId:player.id} ) === undefined) {
-            console.log("player drawings collected");
-            player.complete = true;
+            player.waiting = true;
         }
 
-        if (_.findWhere( game.players, {complete: false, state:'active'} ) === undefined) {
-            console.log("all drawings collected");
-            _.each(game.players, function(element, index, list) {element.complete = false;});
+        if (_.findWhere( game.players, {waiting: false, state:'active'} ) === undefined) {
+            _.each(game.players, function(element, index, list) {element.waiting = false;});
             game.state = STATE.VOTE;
             game.votingRound = 0;
             // Set the timer
@@ -291,7 +303,7 @@ exports.saveDrawing = function(uuid, room, data, cb){
         // EXTRA Put a line from the drawing into the seeds
         if(drawing.lines) {
             var seedLine = _.sample(drawing.lines);
-            seeds.push([seedLine.points]);
+            pushSeed([seedLine.points]);
         }
         postGame(game); // Export to Firebase
         cb(null, game);
@@ -318,7 +330,7 @@ exports.vote = function(uuid, room, votingRound, position, cb){
         // TODO: Check the other drawings for votes this round
         if(drawing.votes === null) drawing.votes = [drawing.playerId];
         drawing.votes.push(uuid);
-        player.voted = true;
+        player.waiting = true;
         // Check here to move to the next voting round/Result phase
         var activePlayers = _.pluck(_.where(game.players, {state: "active"}), 'id');
 
@@ -326,8 +338,7 @@ exports.vote = function(uuid, room, votingRound, position, cb){
         var votersLeft = _.difference(activePlayers, allVotes, [uuid]);
         
         if(votersLeft.length === 0) {
-            console.log("Next voting round");
-            _.each(game.players, function(element, index, list) {element.voted = false;});
+            _.each(game.players, function(element, index, list) {element.waiting = false;});
             game.votingRound += 1;
             // TODO: Reset the start/end times
             var now = new Date().getTime(); // Milliseconds
@@ -349,7 +360,6 @@ exports.vote = function(uuid, room, votingRound, position, cb){
 
 exports.leave = function(room, uuid, cb){
     getGame(room, function(game){
-        console.log(game);
         if(!game) return;
         // Remove their player
         var player = _.findWith(game.players, {id:uuid});

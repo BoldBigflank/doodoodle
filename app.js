@@ -115,7 +115,6 @@ io.on('connection', function (socket) {
     });
 
     socket.on('vote', function(data, cb){
-        console.log("vote received", JSON.stringify(data));
         doodoodle.playerToGame(socket.id, function(gameRoom){
             doodoodle.vote(socket.id, gameRoom, data.votingRound, data.position, function(err, game){
                 if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
