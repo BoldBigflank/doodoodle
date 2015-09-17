@@ -85,7 +85,7 @@ var newRound = function (game, cb) {
     var drawings = []; // An array of Drawing objects
     // Give every active player two starting doodles
 
-    var activePlayers = _.where(game.players, {state: "active"});
+    var activePlayers = _.where(game.players, {role:'player', state: "active"});
     activePlayers = _.shuffle(activePlayers); // Randomize pairings
     _.each(game.players, function(element, index, list) {element.waiting = false;});
 
@@ -187,48 +187,49 @@ exports.host = function(uuid, cb){
     cb(null, game);
 }
 
-exports.join = function(uuid, name, room, cb){
+exports.join = function(uuid, data, cb){
+    var name = data.name;
+    var room = data.room;
+    var oldId = data.oldId;
     if(uuid === undefined) {
         cb("UUID not found");
         return;
     }
-    room = room.toUpperCase()
+    room = room.toUpperCase();
     getGame(room, function(game){
-        console.log("Join room ", game)
         if(typeof game == "undefined") {
-            cb("Room " + room + " not found")
-            // console.log("Room " + room + " not found, creating")
-            // game = newGame(room);
+            cb("Room " + room + " not found");
             return;
         }
         // game.now = new Date().getTime()
-        var player = _.findWhere( game.players, {id: uuid} )
+        if(oldId){
+            var player = _.findWhere( game.players, {id: oldId} );
+            if(player) player.id = uuid;
+            player.name = name;
+            setPlayerToGame(oldId, null);
+        }
         if( typeof player === 'undefined'){
             var player = {
-                id: uuid
-                , name: name
-                , state: 'active'
-                , position:-1
-                , score: 0
-                , room: room
-                , waiting: false
-                , role: 'player'
+                id: uuid,
+                name: name,
+                state: 'active',
+                score: 0,
+                room: room,
+                waiting: false,
+                role: 'player'
+            };
+            
+            if(_.where(game.players, {role:'player', state:'active'}).length >= maxPlayers) player.role = 'spectator';
+            // players.push(player); // All players
+            if(!game.players){ 
+              game.players = [];
             }
-            // Take a hand of cards from the deck
-            setPlayerToGame(player.id, game.room);
-        }
-        if(_.where(game.players, {state:'active'}).length >= maxPlayers) player.state = 'spectator';
 
-        // players.push(player); // All players
-        if(!game.players){ 
-          game.players = [];
-          // Player 1 gets to be a leader
-          // player.role = "leader";
+            game.players.push(player); // Players for the game
         }
-        if(_.where(game.players, {state:'active'}).length >= maxPlayers) player.state = 'spectator';
+        setPlayerToGame(player.id, game.room);
+        player.state = "active"; // They've joined or rejoined
 
-        game.players.push(player); // Players for the game
-        
         // DEBUG
         if(game.room == "DRAW"){
           // Set the timer
@@ -237,6 +238,7 @@ exports.join = function(uuid, name, room, cb){
           game.end = now + drawTime;
           game.now = now;
         }
+
         postGame(game); // Export to Firebase
         cb(null, game);
     });
@@ -246,7 +248,7 @@ exports.join = function(uuid, name, room, cb){
 exports.start = function(room, cb){
     getGame(room, function(game){
         if(!game) return cb("game not found", null);
-        var activePlayers = _.pluck(_.where(game.players, {state: "active"}), 'id');
+        var activePlayers = _.pluck(_.where(game.players, {role:'player', state: "active"}), 'id');
         if(activePlayers.length < 3) return cb("Not enough players to start", null);
         if(game.state.name != STATE.PREP.name && game.state.name != STATE.RESULT.name) return cb("Now is not the time to start a new round");
 
@@ -331,7 +333,7 @@ exports.vote = function(uuid, room, votingRound, position, cb){
         drawing.votes.push(uuid);
         player.waiting = true;
         // Check here to move to the next voting round/Result phase
-        var activePlayers = _.pluck(_.where(game.players, {state: "active"}), 'id');
+        var activePlayers = _.pluck(_.where(game.players, {role:'player', state: "active"}), 'id');
 
         // If there are no active players not in the allVotes list, continue
         var votersLeft = _.difference(activePlayers, allVotes, [uuid]);

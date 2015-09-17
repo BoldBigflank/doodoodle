@@ -28,20 +28,10 @@ app.get('/host', function(req, res){
     res.render('start.jade', { title: 'Doodoodle', isPlayer:false });
 });
 
-// Socket variables
-var availableUUID = 1;
 
 io.on('connection', function (socket) {
-  // socket.emit('news', { hello: 'world' });
-  // socket.on('my other event', function (data) {
-  //   console.log(data);
-  // });
-
-    // No persistence
-    uuid = socket.id;
     console.log("Socket", socket.id, "connected");
 
-    //socket.set('uuid', uuid);
     socket.on('connect', function(cb){
         // This is automatic when a socket connects
         // We don't use this because the client might not be ready to accept data
@@ -55,8 +45,9 @@ io.on('connection', function (socket) {
 
     // User Joins
     socket.on('join', function(data, cb){
+        // TODO: Get the user's previous id and replace it in the db
         // This is called manually when the client has loaded
-        doodoodle.join(socket.id, data.name, data.room, function(err, res){
+        doodoodle.join(socket.id, data, function(err, res){
             if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
             else{
                 socket.join(res.room);

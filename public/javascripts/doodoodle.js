@@ -48,8 +48,7 @@ app.controller('GameCtrl', function ($scope, $timeout, $interval, $cookies, sock
   $scope.errors = [];
   $scope.drawingData = "drawingData";
   $scope.timeDifference = 0;
-    
-  console.log("Cookie Name:", $cookies.name);
+  
   if($cookies.name){
     $scope.joinData.name = $cookies.name;
   }
@@ -106,6 +105,7 @@ app.controller('GameCtrl', function ($scope, $timeout, $interval, $cookies, sock
   $scope.startPlayer = function () {
     $scope.player = true;
     $scope.playerId = io().id;
+    $scope.joinData.oldId = $cookies.playerId; // Old ID if we have it
     console.log("Name " + $scope.joinData.name);
     console.log("room " + $scope.joinData.room);
     socket.emit('join', $scope.joinData, function (err, data) {
@@ -117,7 +117,6 @@ app.controller('GameCtrl', function ($scope, $timeout, $interval, $cookies, sock
         $cookies.playerId = $scope.playerId;
         $cookies.name = $scope.joinData.name;
         $cookies.room = $scope.joinData.room;
-        console.log("Cookie Name:", $cookies.name);
       }
       $scope.$digest();
     });
@@ -320,10 +319,6 @@ app.directive("drawing", function ($document, socket) {
               "x": touch.clientX - event.srcElement.offsetLeft,
               "y": touch.clientY- event.srcElement.offsetTop
             });
-            // coord = canvasCoord({
-            //   "x": event.layerX,
-            //   "y": event.layerY
-            // });
           }
           drawLine(coord);
           // Add to line for saving
