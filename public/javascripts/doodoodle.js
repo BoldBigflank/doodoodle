@@ -462,21 +462,37 @@ app.directive("drawing", function ($document, $cookies, socket) {
 
 app.directive('resize', function ($window) {
   return function ($scope, element, attrs) {
-    var scale = (attrs.scale !== undefined) ? attrs.scale : "1.0";
+    var count = (attrs.count !== undefined) ? attrs.count : "1.0";
+    var scale = 0.75;
     $scope.$watch(function () {
       return {
         'h': $window.innerHeight,
-        'w': $window.innerWidth
+        // 'w': $window.innerWidth,
+        'w': element.parent()[0].offsetWidth
       };
     }, function (newValue, oldValue) {
-      $scope.windowHeight = newValue.h;
-      $scope.windowWidth = newValue.w;
+      if( $window.innerWidth < 992 && count > 1 ){
+        
+        
+        // console.log("Two of 'em", newValue.h);
+      }
+      // $scope.windowHeight = newValue.h;
+      // $scope.windowWidth = newValue.w;
+      // console.log(newValue);
+      var newHeight = newValue.h * scale;
+      var newWidth = (3 / 4 * newHeight);
+      // console.log(newHeight, newWidth);
+      
+      if( newWidth > 0.9 * newValue.w ){
+          // console.log("shrinking");
+          newWidth = 0.9 * newValue.w;
+          newHeight = 4/3 * newWidth;
+      }
 
       $scope.style = function () {
-        var newHeight = newValue.h * scale;
         return {
           'height': newHeight + 'px',
-          'width': (3 / 4 * newHeight) + 'px'
+          'width': newWidth + 'px'
         };
       };
 

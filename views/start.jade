@@ -104,8 +104,8 @@ block content
                 .draw(ng-class="game-panel", ng-show="game.state.name == 'vote' && !player.waiting", state="vote")
                   h3.text-center(ng-hide="game.round == 3") Vote
                   h3.text-center(ng-show="game.round == 3") Theme: {{game.theme}}
-                  .col-md-6(width=450, height=600, drawing, resize, scale=0.4, position=1)
-                  .col-md-6(width=450, height=600, drawing, resize, scale=0.4, position=2)
+                  .col-md-6(width=450, height=600, drawing, resize, count=2, position=1)
+                  .col-md-6(width=450, height=600, drawing, resize, count=2, position=2)
                   .col-xs-12
                     .progress
                       .progress-bar(role="progressbar", aria-valuenow="60", aria-valuemin="0", aria-valuemax="100", style="{{progressStyle}}" )
