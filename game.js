@@ -400,9 +400,3 @@ drawGame = newGame("12345");
 drawGame.room = "DRAW";
 drawGame.state = STATE.DRAW;
 postGame(drawGame);
-
-// A Debug VOTE room
-drawGame = newGame("54321");
-drawGame.room = "VOTE";
-drawGame.state = STATE.VOTE;
-postGame(drawGame);
