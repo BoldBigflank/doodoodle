@@ -183,7 +183,6 @@ app.directive("drawing", function ($document, $cookies, socket) {
       "position": "=position"
     },
     link: function (scope, element, attrs) {
-        console.log("Parent says playerId is", scope.$parent.playerId);
       scope.colors = [
         '#1F75FE',
         '#1CAC78',
@@ -200,7 +199,6 @@ app.directive("drawing", function ($document, $cookies, socket) {
         ];
       scope.color = "#1F75FE";
 
-      if (!position) position = -1;
       // The canvas
       var canvas = element[0].getElementsByTagName('canvas')[0];
       var ctx = element[0].getElementsByTagName('canvas')[0].getContext('2d');
@@ -356,7 +354,6 @@ app.directive("drawing", function ($document, $cookies, socket) {
         });
       };
 
-
       // *** Mouse Controls ***
       canvas.addEventListener('mousedown', start);
       canvas.addEventListener('mousemove', move);
@@ -368,7 +365,8 @@ app.directive("drawing", function ($document, $cookies, socket) {
       canvas.addEventListener('touchend', end);
 
       // *** Vote Controls ***
-      if (position > 0) {
+      if (scope.position > 0) {
+        console.log("My position is", scope.position);
         canvas.addEventListener('touchend', vote);
         canvas.addEventListener('mouseup', vote);
       }

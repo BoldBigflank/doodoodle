@@ -52,7 +52,7 @@ var newGame = function (host, cb) {
         state:STATE.PREP,
         round:0,
         theme:pickTheme(),
-        votingRound:-1,
+        votingRound:0,
         room:newRoom(),
         host:host,
         begin:null,
@@ -101,7 +101,6 @@ var newRound = function (game, cb) {
               position: 1,
               votingRound: votingRound,
               lines: null,
-              votes: [player.id],
               submitted: false
           };
           drawings.push(drawing);
@@ -113,7 +112,6 @@ var newRound = function (game, cb) {
               position: 2,
               votingRound: votingRound,
               lines: null,
-              votes: [partnerId],
               submitted: false
           };
           drawings.push(drawing2);
@@ -122,6 +120,8 @@ var newRound = function (game, cb) {
       }
 
       game.drawings = drawings;
+      game.votes = [];
+      game.votingRound = 0;
       cb(game);
     });
     
@@ -139,11 +139,56 @@ var pickTheme = function(){
     return _.sample(["sports", "animals", "travel", "people", "music", "events"]);
 };
 
-var updateScores = function(game){
-    for(var x in game.drawings){
-        var drawing = game.drawings[x];
-        var player = _.find(game.players, {"id":drawing.playerId});
-        player.score += drawing.votes.length-1;
+var setState = function(game, state, cb){
+    game.state = state;
+    if(state == STATE.PREP){
+        cb(game);
+    } else if (state == STATE.DRAW) {
+        if( game.round >= 3 ){
+            _.each(game.players, function(player){
+                player.score = 0;
+            });
+            game.round = 0;
+        }
+        game.round++;
+        newRound(game, function(game){
+            var now = new Date().getTime(); // Milliseconds
+            game.begin = now;
+            game.end = now + drawTime;
+            game.now = now;
+            cb(game);
+        });
+    } else if (state == STATE.VOTE) {
+        console.log("Voting round", game.votingRound)
+        _.each(game.players, function(player, index, list) {
+            player.waiting = false;
+            console.log("Checking player",player.name);
+            // The creators
+            if(_.findWhere(game.drawings, {votingRound:game.votingRound, playerId:player.id}) !== undefined){
+                console.log("Player", player.name, "is a creator");
+                player.waiting = true;
+            }
+            // The voters
+            if(_.findWhere(game.votes, {votingRound:game.votingRound, playerId:player.id}) !== undefined){
+                console.log("Player", player.name, "has voted");
+                player.waiting = true;
+            }
+        });
+        // game.votingRound = 0;
+        // Set the timer
+        console.log("Done checking players");
+        var now = new Date().getTime(); // Milliseconds
+        game.begin = now;
+        game.end = now + voteTime;
+        game.now = now;
+        cb(game);
+    } else if (state == STATE.RESULT) {
+        var scores = _.groupBy(game.votes, function(vote){return vote.ownerId;});
+        _.each(scores, function(value, key, list){
+            var player = _.find(game.players, {"id":key});
+            player.score += value.length;
+        });
+        cb(game);
     }
 };
 
@@ -245,22 +290,9 @@ exports.start = function(room, cb){
         if(activePlayers.length < 3) return cb("Not enough players to start", null);
         if(game.state.name != STATE.PREP.name && game.state.name != STATE.RESULT.name) return cb("Now is not the time to start a new round");
 
-        game.state = STATE.DRAW;
-        if( game.round >= 3 ){
-            _.each(game.players, function(player){
-                player.score = 0;
-            });
-            game.round = 0;
-        }
-        game.round++;
-        newRound(game, function(game){
-          var now = new Date().getTime(); // Milliseconds
-          game.begin = now;
-          game.end = now + drawTime;
-          game.now = now;
-          
-          postGame(game); // Export to Firebase
-          cb(null, game);
+        setState(game, STATE.DRAW, function(game){
+            postGame(game); // Export to Firebase
+            cb(null, game);
         });
     });
 };
@@ -280,79 +312,80 @@ exports.saveDrawing = function(playerId, room, data, cb){
         }
 
         if (_.findWhere( game.players, {waiting: false, state:'active'} ) === undefined) {
-            _.each(game.players, function(element, index, list) {element.waiting = false;});
-            game.state = STATE.VOTE;
-            game.votingRound = 0;
-            setWaiting(game);
-            // Set the timer
-            var now = new Date().getTime(); // Milliseconds
-            game.begin = now;
-            game.end = now + voteTime;
-            game.now = now;
-            
+            setState(game, STATE.VOTE, function(game){
+                postGame(game); // Export to Firebase
+                cb(null, game);
+            });
+        } else {
+            postGame(game); // Export to Firebase
+            cb(null, game);
         }
+
         // EXTRA Put a line from the drawing into the seeds
         if(drawing.lines) {
             var seedLine = _.sample(drawing.lines);
-            pushSeed([seedLine.points]);
+            if(seedLine)
+                pushSeed([seedLine.points]);
         }
-        postGame(game); // Export to Firebase
-        cb(null, game);
     });
     
 
 };
 
-var setWaiting = function(game){
-    var drawingsThisRound = _.where(game.drawings, {votingRound:game.votingRound});
-    var allVotes = _.flatten(_.pluck(drawingsThisRound, 'votes'));
-    _.each(allVotes, function(playerId){
-      var p = _.findWhere(game.players, {id:playerId});
-      p.waiting = true;
-    });
-};
+// var setWaiting = function(game){
+//     var drawingsThisRound = _.where(game.drawings, {votingRound:game.votingRound});
+//     var allVotes = _.flatten(_.pluck(drawingsThisRound, 'votes'));
+//     _.each(allVotes, function(playerId){
+//       var p = _.findWhere(game.players, {id:playerId});
+//       p.waiting = true;
+//     });
+// };
 
 exports.vote = function(playerId, room, votingRound, position, cb){
+    console.log("game.vote", playerId, room, votingRound, position);
     getGame(room, function(game){
         if(!game) return cb("game not found", null);
         if(game.votingRound != votingRound) return cb("Too late, wrong round");
         var player = _.findWhere( game.players, {id: playerId} );
         if(!player) return cb("player not found", null);
         var drawingsThisRound = _.where(game.drawings, {votingRound:votingRound});
-        var allVotes = _.flatten(_.pluck(drawingsThisRound, 'votes'));
-        var hasVoted = _.contains(allVotes, playerId);
+        // var allVotes = _.filter(game.votes, function(vote){ return vote.votingRound == votingRound; });
         
+        var hasVoted = _.findWhere(game.votes, {votingRound:votingRound, playerId:player.id}) !== undefined;
         if(hasVoted) return cb("You've already voted this round");
+        
         var drawing = _.findWhere(game.drawings, {votingRound:votingRound, position:position});
         
-        if(drawing.votes === null) drawing.votes = [drawing.playerId];
-        drawing.votes.push(playerId);
+        if( !game.votes ) game.votes = [];
+        game.votes.push({playerId:playerId, votingRound:votingRound, position:position, ownerId:drawing.playerId});
         player.waiting = true;
         // Check here to move to the next voting round/Result phase
         var activePlayers = _.pluck(_.where(game.players, {role:'player', state: "active"}), 'id');
 
         // If there are no active players not in the allVotes list, continue
-        var votersLeft = _.difference(activePlayers, allVotes, [playerId]);
+        var allVoted = _.findWhere(game.players, {state:"active", waiting:false}) === undefined;
         
-        if(votersLeft.length === 0) {
-            _.each(game.players, function(element, index, list) {element.waiting = false;});
+        if(allVoted) {
+            console.log("EVERYONE VOTED");
             game.votingRound += 1;
-            setWaiting(game);
-
-            // TODO: Reset the start/end times
-            var now = new Date().getTime(); // Milliseconds
-            game.begin = now;
-            game.end = now + voteTime;
-            game.now = now;
-            
+            if(_.findWhere(game.drawings, {votingRound:game.votingRound} ) === undefined){ // No more drawings
+                console.log("No more drawings");
+                setState(game, STATE.RESULT, function(game){
+                    postGame(game); // Export to Firebase
+                    cb(null, game);
+                });
+            }else { // Next voting round
+                console.log("Next Voting Round");
+                setState(game, STATE.VOTE, function(game){
+                    console.log("Done setting the state", game.votingRound);
+                    postGame(game); // Export to Firebase
+                    cb(null, game);
+                });
+            }
+        } else {
+            postGame(game); // Export to Firebase
+            cb(null, game);
         }
-        if(game.votingRound >= activePlayers.length){
-            updateScores(game);
-            game.state = STATE.RESULT;
-        }
-
-        postGame(game); // Export to Firebase
-        cb(null, game);
     });
     
 };

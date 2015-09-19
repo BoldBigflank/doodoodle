@@ -77,6 +77,7 @@ io.on('connection', function (socket) {
     // Player calls to start the game
     socket.on('start', function(data, cb){
         doodoodle.socketToGame(socket.id, function(roomData){
+            if(!roomData) return cb("Refresh");
             var playerId = roomData.playerId;
             var gameRoom = roomData.gameRoom;
             
@@ -86,18 +87,15 @@ io.on('connection', function (socket) {
                     console.log(gameRoom, "--> Start", playerId);
                     // send the game in its new state
                     io.to(gameRoom).emit('game', game);
-                    // Since it's a new round, send the round on the round channel
-                    // io.to(gameRoom).emit('round', game.round);
                     io.to(game.host).emit('event', {"event":"start"});
                 }
             });
         });
-        
-
     });
 
     socket.on('drawing', function(data, cb){
         doodoodle.socketToGame(socket.id, function(roomData){
+            if(!roomData) return cb("Refresh");
             var playerId = roomData.playerId;
             var gameRoom = roomData.gameRoom;
             console.log("Saving",playerId,gameRoom);
@@ -113,10 +111,12 @@ io.on('connection', function (socket) {
 
     socket.on('vote', function(data, cb){
         doodoodle.socketToGame(socket.id, function(roomData){
+            if(!roomData) return cb("Refresh");
             var playerId = roomData.playerId;
             var gameRoom = roomData.gameRoom;
             
             doodoodle.vote(playerId, gameRoom, data.votingRound, data.position, function(err, game){
+                if (err) console.log(err);
                 if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
                 console.log(gameRoom, "--> Vote", data.votingRound, data.position);
                 io.to(gameRoom).emit('game', game);
