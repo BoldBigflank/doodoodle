@@ -283,6 +283,7 @@ exports.saveDrawing = function(playerId, room, data, cb){
             _.each(game.players, function(element, index, list) {element.waiting = false;});
             game.state = STATE.VOTE;
             game.votingRound = 0;
+            setWaiting(game);
             // Set the timer
             var now = new Date().getTime(); // Milliseconds
             game.begin = now;
@@ -300,6 +301,15 @@ exports.saveDrawing = function(playerId, room, data, cb){
     });
     
 
+};
+
+var setWaiting = function(game){
+    var drawingsThisRound = _.where(game.drawings, {votingRound:game.votingRound});
+    var allVotes = _.flatten(_.pluck(drawingsThisRound, 'votes'));
+    _.each(allVotes, function(playerId){
+      var p = _.findWhere(game.players, {id:playerId});
+      p.waiting = true;
+    });
 };
 
 exports.vote = function(playerId, room, votingRound, position, cb){
@@ -327,11 +337,7 @@ exports.vote = function(playerId, room, votingRound, position, cb){
         if(votersLeft.length === 0) {
             _.each(game.players, function(element, index, list) {element.waiting = false;});
             game.votingRound += 1;
-            roundDrawings = _.pluck(game.drawings, {votingRound:game.votingRound});
-            _.each(roundDrawings, function(drawing){
-              var p = _.findWhere(game.players, {id:drawing.playerId});
-              p.waiting = true;
-            });
+            setWaiting(game);
 
             // TODO: Reset the start/end times
             var now = new Date().getTime(); // Milliseconds

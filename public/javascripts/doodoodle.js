@@ -62,9 +62,8 @@ app.controller('GameCtrl', function ($scope, $timeout, $interval, $cookies, sock
     return id;
   };
 
-  $scope.playerId = ($cookies.get("playerId")) ? $cookies.get("playerId") : generatePlayerId();
-
-
+  $scope.playerId = ($cookies.get("playerId") !== undefined) ? $cookies.get("playerId") : generatePlayerId();
+  
   var popError = function(){
     $scope.errors.shift();
     $scope.$digest();
@@ -170,10 +169,10 @@ app.controller('GameCtrl', function ($scope, $timeout, $interval, $cookies, sock
 
 });
 
-app.directive("drawing", function ($document, socket) {
+app.directive("drawing", function ($document, $cookies, socket) {
   return {
     template: "<table ng-show='{{position}} <= 0' style='margin:auto;' class=''> <tr style='height:25px'> <td ng-repeat='c in colors' bgcolor='{{c}}' ng-class='{\"colorPicked\": c == color }' width=25px ng-click='changeColor(c)'> </tr> </table>" +
-      "<canvas ng-class='{\"bg-primary\": drawing.votes.indexOf(io().id) != -1 }' width={{width}}px height={{height}}px scale={{scale}} resize ng-style='style()' class='drawing'></canvas>" +
+      "<canvas width={{width}}px height={{height}}px scale={{scale}} resize ng-style='style()' class='drawing'></canvas>" +
       "<button ng-show='{{position}} <= 0' class='btn btn-block btn-default text-uppercase' ng-click='submitPicture()' type='submit'>Submit</button>",
     restrict: "A",
     transclude: true,
@@ -184,6 +183,7 @@ app.directive("drawing", function ($document, socket) {
       "position": "=position"
     },
     link: function (scope, element, attrs) {
+        console.log("Parent says playerId is", scope.$parent.playerId);
       scope.colors = [
         '#1F75FE',
         '#1CAC78',
@@ -206,10 +206,10 @@ app.directive("drawing", function ($document, socket) {
       var ctx = element[0].getElementsByTagName('canvas')[0].getContext('2d');
 
       // The stored lines
-      var drawing = {
+      scope.drawing = {
           lines: null,
           seed: [],
-          player: -1,
+          playerId: scope.$parent.playerId,
           position: -1,
           votingRound: -1,
           votes: null
@@ -280,8 +280,8 @@ app.directive("drawing", function ($document, socket) {
 
       var clearCanvas = function () {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawing.lines = [];
-        drawing.seed = [];
+        scope.drawing.lines = [];
+        scope.drawing.seed = [];
       };
 
       // Event functions
@@ -337,19 +337,20 @@ app.directive("drawing", function ($document, socket) {
       var end = function (event) {
         if (isDrawing) {
           // Push the line for saving
-          if (!drawing.lines) drawing.lines = [];
-          drawing.lines.push({"color":scope.color, "points":currentLine});
+          if (!scope.drawing.lines) scope.drawing.lines = [];
+          scope.drawing.lines.push({"color":scope.color, "points":currentLine});
           // Put the seedline on top
-          draw(drawing.seed);
+          draw(scope.drawing.seed);
         }
         // stop drawing
         isDrawing = false;
       };
 
       var vote = function (event) {
+        console.log("Voting", scope.drawing.votingRound, scope.drawing.position);
         socket.emit('vote', {
-          "votingRound": drawing.votingRound,
-          position: drawing.position
+          "votingRound": scope.drawing.votingRound,
+          position: scope.drawing.position
         }, function (err, game) {
           console.log("Vote callback:", err, game);
         });
@@ -373,13 +374,16 @@ app.directive("drawing", function ($document, socket) {
       }
 
       scope.submitPicture = function () {
-        console.log("sending", drawing);
-        socket.emit('drawing', drawing, function (err, game) {
+        scope.drawing.playerId = scope.$parent.playerId;
+        console.log("sending", scope.drawing);
+        socket.emit('drawing', scope.drawing, function (err, game) {
           console.log(err, game);
           scope.error = err;
-          // If there are more to do, replace this with them.
-          clearCanvas();
-          scope.updatePictures(game);
+          if(game){
+            // If there are more to do, replace this with them.
+            clearCanvas();
+            scope.updatePictures(game);
+          }
         });
       };
 
@@ -399,9 +403,9 @@ app.directive("drawing", function ($document, socket) {
 
         // Update the player seed
         if (position == -1) {
-          console.log("Updating the main drawing");
+          console.log("Updating the main drawing", gameData);
           gameDrawing = _.findWhere(gameData.drawings, {
-            playerId: io().id,
+            playerId: scope.$parent.playerId,
             submitted: false
           });
           if (!gameDrawing){
@@ -409,10 +413,10 @@ app.directive("drawing", function ($document, socket) {
             return;
           }
 
-          var newLines = _.without(gameDrawing.seed, drawing.seed);
+          var newLines = _.without(gameDrawing.seed, scope.drawing.seed);
           if (newLines) {
             draw(newLines);
-            drawing.seed = gameDrawing.seed;
+            scope.drawing.seed = gameDrawing.seed;
           }
 
           // console.log("Doing a full update");
@@ -420,28 +424,28 @@ app.directive("drawing", function ($document, socket) {
           // // draw(gameDrawing.lines);
           // drawing = gameDrawing;
         
-          drawing.seed = gameDrawing.seed;
-          drawing.player = gameDrawing.player;
-          drawing.position = gameDrawing.position;
-          drawing.votingRound = gameDrawing.votingRound;
-          drawing.votes = gameDrawing.votes;
+          scope.drawing.seed = gameDrawing.seed;
+          scope.drawing.playerId = gameDrawing.player;
+          scope.drawing.position = gameDrawing.position;
+          scope.drawing.votingRound = gameDrawing.votingRound;
+          scope.drawing.votes = gameDrawing.votes;
         
         }
 
         // Draw the pictures to be voted on
         else if (gameData.state.name == "vote") {
-          if (gameData.votingRound != drawing.votingRound) { // Voting round has changed
+          if (gameData.votingRound != scope.drawing.votingRound) { // Voting round has changed
             console.log("Updating the voting one");
-            votingRound = gameData.votingRound;
+            scope.drawing.votingRound = gameData.votingRound;
             gameDrawing = _.findWhere(gameData.drawings, {
               position: position,
-              votingRound: votingRound
+              votingRound: scope.drawing.votingRound
             });
             if (!gameDrawing) return;
             clearCanvas();
             draw(gameDrawing.seed);
             draw(gameDrawing.lines);
-            drawing = gameDrawing;
+            scope.drawing = gameDrawing;
           }
         }
 
