@@ -63,7 +63,7 @@ var newGame = function (host, cb) {
 };
 
 var getGame = function (room, cb) {
-    console.log("Getting Game", room);
+    // console.log("Getting Game", room);
     var gameRef = new Firebase("https://doodoodle.firebaseio.com/games/" + room);
     gameRef.once('value', function(game){
         cb(game.val());
@@ -159,24 +159,19 @@ var setState = function(game, state, cb){
             cb(game);
         });
     } else if (state == STATE.VOTE) {
-        console.log("Voting round", game.votingRound)
         _.each(game.players, function(player, index, list) {
             player.waiting = false;
-            console.log("Checking player",player.name);
             // The creators
             if(_.findWhere(game.drawings, {votingRound:game.votingRound, playerId:player.id}) !== undefined){
-                console.log("Player", player.name, "is a creator");
                 player.waiting = true;
             }
             // The voters
             if(_.findWhere(game.votes, {votingRound:game.votingRound, playerId:player.id}) !== undefined){
-                console.log("Player", player.name, "has voted");
                 player.waiting = true;
             }
         });
         // game.votingRound = 0;
         // Set the timer
-        console.log("Done checking players");
         var now = new Date().getTime(); // Milliseconds
         game.begin = now;
         game.end = now + voteTime;
@@ -366,18 +361,14 @@ exports.vote = function(playerId, room, votingRound, position, cb){
         var allVoted = _.findWhere(game.players, {state:"active", waiting:false}) === undefined;
         
         if(allVoted) {
-            console.log("EVERYONE VOTED");
             game.votingRound += 1;
             if(_.findWhere(game.drawings, {votingRound:game.votingRound} ) === undefined){ // No more drawings
-                console.log("No more drawings");
                 setState(game, STATE.RESULT, function(game){
                     postGame(game); // Export to Firebase
                     cb(null, game);
                 });
             }else { // Next voting round
-                console.log("Next Voting Round");
                 setState(game, STATE.VOTE, function(game){
-                    console.log("Done setting the state", game.votingRound);
                     postGame(game); // Export to Firebase
                     cb(null, game);
                 });
