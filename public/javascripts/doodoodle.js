@@ -303,6 +303,7 @@ app.directive("drawing", function ($document, $cookies, socket) {
         // start a new line for saving
         currentLine = [coord];
         isDrawing = true;
+        return false;
       };
 
       var move = function (event) {
@@ -329,7 +330,7 @@ app.directive("drawing", function ($document, $cookies, socket) {
           // TODO: Only save when the distance is > 3px
           currentLine.push(coord);
         }
-
+        return false;
       };
 
       var end = function (event) {
@@ -342,6 +343,7 @@ app.directive("drawing", function ($document, $cookies, socket) {
         }
         // stop drawing
         isDrawing = false;
+        return false;
       };
 
       var vote = function (event) {
