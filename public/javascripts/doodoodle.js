@@ -140,7 +140,7 @@
     if (!vm.isPlayer) {
       vm.startHost();
     } else {
-      var inputRoom = $document.getElementById("inputRoom");
+      var inputRoom = document.getElementById("inputRoom");
       inputRoom.focus();
       $timeout(function () { inputRoom.select(); }, 10);
 
@@ -207,7 +207,7 @@
         scope.drawing = {
             lines: null,
             seed: [],
-            playerId: scope.$parent.playerId,
+            playerId: scope.$parent.vm.playerId,
             position: -1,
             votingRound: -1,
             votes: null
@@ -374,7 +374,7 @@
         }
 
         scope.submitPicture = function () {
-          scope.drawing.playerId = scope.$parent.playerId;
+          scope.drawing.playerId = scope.$parent.vm.playerId;
           console.log("sending", scope.drawing);
           SocketFactory.emit('drawing', scope.drawing, function (err, game) {
             console.log(err, game);
@@ -387,25 +387,13 @@
           });
         };
 
-        scope.votePicture = function () {
-          var data = {};
-          // data.player = $scope.linesArray;
-          console.log("sending", scope.linesArray);
-          SocketFactory.emit('vote', data, function (err, game) {
-            console.log(err, game);
-            // TODO: Make the error display
-
-          });
-        };
-
         scope.updatePictures = function (gameData) {
           var gameDrawing = null;
 
           // Update the player seed
           if (position == -1) {
-            console.log("Updating the main drawing", gameData);
             gameDrawing = _.findWhere(gameData.drawings, {
-              playerId: scope.$parent.playerId,
+              playerId: scope.$parent.vm.playerId,
               submitted: false
             });
             if (!gameDrawing){
@@ -419,11 +407,6 @@
               scope.drawing.seed = gameDrawing.seed;
             }
 
-            // console.log("Doing a full update");
-            // // draw(gameDrawing.seed);
-            // // draw(gameDrawing.lines);
-            // drawing = gameDrawing;
-          
             scope.drawing.seed = gameDrawing.seed;
             scope.drawing.playerId = gameDrawing.player;
             scope.drawing.position = gameDrawing.position;
@@ -450,6 +433,10 @@
           }
 
         };
+
+        scope.$parent.$watch('state', function(oldState, newState){
+          console.log("Caught the state change", newState);
+        });
 
         SocketFactory.on('game', function (gameData) {
           console.log("Drawing -> game received");
