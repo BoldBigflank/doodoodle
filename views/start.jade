@@ -3,8 +3,7 @@ block stylesheets
 
 
 block content
-  div(ng-controller='GameCtrl')
-        
+  div(ng-controller='GameCtrl as vm')
     script.
       var isPlayer= #{isPlayer};
     .row.row-offcanvas.row-offcanvas-right
@@ -13,7 +12,7 @@ block content
             .pull-right.visible-xs.visible-sm
               //- button.btn.btn-primary.btn-xs.dropdown-toggle( data-toggle='dropdown', aria-haspopup="true", aria-expanded="false") Scores
               .dropdown
-                button.btn.btn-primary.btn-xs#dLabel(ng-show="game && game.players.length > 0", type="button", data-toggle="dropdown", aria-haspopup="true", aria-expanded="false")
+                button.btn.btn-primary.btn-xs#dLabel(ng-show="vm.game && vm.game.players.length > 0", type="button", data-toggle="dropdown", aria-haspopup="true", aria-expanded="false")
                   | Scores
                   span.caret
                 ul.dropdown-menu.dropdown-menu-right( aria-labelledby="dLabel")
@@ -25,104 +24,102 @@ block content
                           th Name:
                           th Score
                       tbody
-                        tr(ng-repeat='p in game.players | orderBy: "-score"')
+                        tr(ng-repeat='p in vm.game.players | orderBy: "-score"')
                           td {{$index + 1}}
                           td {{p.name}}
                           td {{p.score}}
 
             //- Host Controls
-            div.row(ng-show="!isPlayer")
-              div.col-sm-12.text-center(ng-show="game.state.name == 'prep'")
+            div.row(ng-show="!vm.isPlayer")
+              div.col-sm-12.text-center(ng-show="vm.game.state.name == 'prep'")
                 h2 Preparation
                 h3 Go to 
                   strong http://ggez.tv
                 h3 Join room 
-                  strong {{game.room}}
+                  strong {{ vm.game.room }}
                 a(href="/player")
                   button.btn.btn-default.btn-xs(type='button') Wait, I'm a player!
-              div.col-sm-12.text-center(ng-show="game.state.name == 'draw'")
-                h2 Round {{game.round}}
-                h3(ng-show="game.round == 3") Theme: {{game.theme}}
+              div.col-sm-12.text-center(ng-show="vm.game.state.name == 'draw'")
+                h2 Round {{vm.game.round}}
+                h3(ng-show="vm.game.round == 3") Theme: {{vm.game.theme}}
                 h3 On your device, add to the picture
                 h4 Make it funny, cool, whatever
-              div.col-sm-12.text-center(ng-show="game.state.name == 'vote'")
+              div.col-sm-12.text-center(ng-show="vm.game.state.name == 'vote'")
                 h2 Vote Phase
                 h3 On your device, pick your favorite
                 h4 It's up to you! Also, you don't get to vote for or against your own drawings
-              div.col-sm-12.text-center(ng-show="game.state.name == 'result'")
+              div.col-sm-12.text-center(ng-show="vm.game.state.name == 'result'")
                 h2 Result Phase
                 h3 Here's who got what votes
 
 
             //- Player Controls
-            div.row(ng-show="isPlayer")
+            div.row(ng-show="vm.isPlayer")
               //- Pre-Game setup
-              div.panel.panel-primary.join-panel(ng-show="!game")
+              div.panel.panel-primary.join-panel(ng-show="!vm.game")
                 .panel-heading
                   h3.panel-title Join a Game
                 .panel-body
                   form(ng-class="game-panel", name="playerForm")
                     .form-group
                       label(for='inputRoom') Room
-                      input#inputRoom.form-control(ng-model="joinData.room", type='text', placeholder='XXXX', required, ng-minlength=4, ng-maxlength=4, ng-pattern="/[A-Z]*/", maxlength=4)
-                      p {{room}}
+                      input#inputRoom.form-control(ng-model="vm.joinData.room", type='text', placeholder='XXXX', required, ng-minlength=4, ng-maxlength=4, ng-pattern="/[A-Z]*/", maxlength=4)
                     .form-group
                       label(for='inputName') Name
-                      input#inputName.form-control(name="inputName", ng-model="joinData.name", type='text', placeholder='Name', required)
-                      p {{playerName}}
+                      input#inputName.form-control(name="inputName", ng-model="vm.joinData.name", type='text', placeholder='Name', required)
                     .form-group
-                      button.btn.btn-block.btn-info.text-uppercase(ng-click="startPlayer()",type='submit', ng-disabled="playerForm.$invalid") Go
+                      button.btn.btn-block.btn-info.text-uppercase(ng-click="vm.startPlayer()",type='submit', ng-disabled="playerForm.$invalid") Go
                     .form-group
                       
                 .panel-footer
                   a(href="/host")
                     button.btn.btn-default.btn-xs(type='button') Wait, I'm a host!
-                  span.pull-right {{playerId}}
+                  span.pull-right {{vm.playerId}}
 
                 
               //- Game controls
-              div.controls(ng-show="game && game.state")
+              div.controls(ng-show="vm.game && vm.game.state")
                 //- Prep
-                .prep-buttons(ng-class="game-panel", ng-show="game.state.name == 'prep'", state="prep")
+                .prep-buttons(ng-class="game-panel", ng-show="vm.game.state.name == 'prep'", state="prep")
                   h3 When everyone is in, press Start
-                  button.btn.btn-block.btn-default.text-uppercase(ng-click="action('start')",type='submit') Start
+                  button.btn.btn-block.btn-default.text-uppercase(ng-click="vm.action('start')",type='submit') Start
                 //- Draw
-                .header(ng-class="game-panel", ng-show="game.state.name == 'draw' && !player.waiting", state="draw")
-                  h3.text-center(ng-hide="game.round == 3") Draw
-                  h3.text-center(ng-show="game.round == 3") Theme: {{game.theme}}
+                .header(ng-class="game-panel", ng-show="vm.game.state.name == 'draw' && !vm.player.waiting", state="draw")
+                  h3.text-center(ng-hide="vm.game.round == 3") Draw
+                  h3.text-center(ng-show="vm.game.round == 3") Theme: {{game.theme}}
                   .cols-sm-12
                     div(width=450, height=600, scale=0.75, position=-1, drawing )
                   .col-xs-12
                     .progress
-                      .progress-bar(role="progressbar", aria-valuenow="60", aria-valuemin="0", aria-valuemax="100", style="{{progressStyle}}" )
+                      .progress-bar(role="progressbar", aria-valuenow="60", aria-valuemin="0", aria-valuemax="100", style="{{vm.progressStyle}}" )
                 //- Draw - Complate
-                .header(ng-class="game-panel", ng-show="game.state.name == 'draw' && player.waiting", state="draw")
+                .header(ng-class="game-panel", ng-show="vm.game.state.name == 'draw' && vm.player.waiting", state="draw")
                   h3.text-center Done
                   .cols-sm-12
                     h3 You did it! Now wait on everyone else.
                 //- Vote
-                .draw(ng-class="game-panel", ng-show="game.state.name == 'vote' && !player.waiting", state="vote")
-                  h3.text-center(ng-hide="game.round == 3") Vote
-                  h3.text-center(ng-show="game.round == 3") Theme: {{game.theme}}
+                .draw(ng-class="game-panel", ng-show="vm.game.state.name == 'vote' && !vm.player.waiting", state="vote")
+                  h3.text-center(ng-hide="vm.game.round == 3") Vote
+                  h3.text-center(ng-show="vm.game.round == 3") Theme: {{game.theme}}
                   .col-md-6(width=450, height=600, drawing, resize, scale=0.4, position=1)
                   .col-md-6(width=450, height=600, drawing, resize, scale=0.4, position=2)
                   .col-xs-12
                     .progress
-                      .progress-bar(role="progressbar", aria-valuenow="60", aria-valuemin="0", aria-valuemax="100", style="{{progressStyle}}" )
+                      .progress-bar(role="progressbar", aria-valuenow="60", aria-valuemin="0", aria-valuemax="100", style="{{vm.progressStyle}}" )
                 //- Vote - complete
-                .draw(ng-class="game-panel", ng-show="game.state.name == 'vote' && player.waiting", state="vote")
+                .draw(ng-class="game-panel", ng-show="vm.game.state.name == 'vote' && vm.player.waiting", state="vote")
                   h3 You are good at picking things.
                 //- Result
-                .draw-buttons(ng-class="game-panel", ng-show="game.state.name == 'result'", state="result")
+                .draw-buttons(ng-class="game-panel", ng-show="vm.game.state.name == 'result'", state="result")
                   | Result buttons
-                  div(ng-show="game.round == 3")
-                    button.btn.btn-block.btn-default.text-uppercase(ng-click="action('start')",type='submit') Same Players
+                  div(ng-show="vm.game.round == 3")
+                    button.btn.btn-block.btn-default.text-uppercase(ng-click="vm.action('start')",type='submit') Same Players
                     a.btn.btn-block.btn-default.text-uppercase(href="/player") New Players
-                  div(ng-hide="game.round == 3")
-                    button.btn.btn-block.btn-default.text-uppercase(ng-click="action('start')",type='submit') New Round
+                  div(ng-hide="vm.game.round == 3")
+                    button.btn.btn-block.btn-default.text-uppercase(ng-click="vm.action('start')",type='submit') New Round
                   
             p
-                div.alert.alert-danger.error(ng-repeat='e in errors.slice().reverse() track by $index ')
+                div.alert.alert-danger.error(ng-repeat='e in vm.errors.slice().reverse() track by $index ')
                   | {{$index}} {{ e.message }}
 
         #sidebar.hidden-sm.col-md-3.sidebar-offcanvas
@@ -135,7 +132,7 @@ block content
                 th Name:
                 th Score
             tbody
-              tr(ng-class="{'info':p.id == playerId, 'success':p.waiting }", ng-repeat='p in game.players | orderBy: "-score"')
+              tr(ng-class="{'info':p.id == vm.playerId, 'success':p.waiting }", ng-repeat='p in vm.game.players | orderBy: "-score"')
                 td {{$index + 1}}
                 td {{p.name}}
                 td {{p.score}}
