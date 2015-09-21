@@ -4,37 +4,36 @@
 // Angular
 (function () {
   function SocketFactory ($rootScope) {
+    var SocketFactory = {};
     var socket = io.connect(); // Production
     // var socket = io.connect('http://localhost:3000'); // Local
     // var socket = io.connect('http://192.168.29.235:3000');
+    SocketFactory.on = function (eventName, data, callback) {
+      if (typeof (callback) === 'undefined') callback = data;
 
-    return {
-      on: function (eventName, data, callback) {
-        if (typeof (callback) === 'undefined') callback = data;
-
-        socket.on(eventName, function () {
+      socket.on(eventName, function () {
+        var args = arguments;
+        callback.apply(socket, args);
+      });
+    };
+    SocketFactory.emit = function (eventName, data, callback) {
+      if (typeof (callback) === 'function') {
+        socket.emit(eventName, data, function () {
           var args = arguments;
-          callback.apply(socket, args);
+          if (callback) {
+            callback.apply(socket, args);
+          }
         });
-      },
-      emit: function (eventName, data, callback) {
-        if (typeof (callback) === 'function') {
-          socket.emit(eventName, data, function () {
-            var args = arguments;
-            if (callback) {
-              callback.apply(socket, args);
-            }
-          });
-        } else {
-          socket.emit(eventName, function () {
-            var args = arguments;
-            if (callback) {
-              callback.apply(socket, args);
-            }
-          });
-        }
+      } else {
+        socket.emit(eventName, function () {
+          var args = arguments;
+          if (callback) {
+            callback.apply(socket, args);
+          }
+        });
       }
     };
+    return SocketFactory;
   }
 
   function GameCtrl ($scope, $timeout, $interval, $cookies, socket) {
@@ -54,6 +53,7 @@
       this.joinData.room = $cookies.get("room");
     }
     
+    // FIX: Business logic should be in a Service
     var generatePlayerId = function(){
       var id = '_' + Math.random().toString(36).substr(2, 9);
       $cookies.put("playerId", id);
@@ -77,8 +77,6 @@
       vm.progressStyle = "width: " + percentage + "%;";
       
     };
-
-    
 
     $interval(updateTime, 1000);
 
