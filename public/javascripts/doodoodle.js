@@ -36,7 +36,7 @@
     return SocketFactory;
   }
 
-  function GameCtrl ($scope, $timeout, $interval, $cookies, socket) {
+  function GameCtrl ($scope, $document, $timeout, $interval, $cookies, SocketFactory) {
     var vm = this;
     this.playerId = 0;
     this.joinData = {"name":"Alex", "room":"DRAW"}; // DEBUG DATA
@@ -100,7 +100,7 @@
     this.startHost = function () {
       console.log("startHost");
       vm.player = false;
-      socket.emit('host', function (data) {
+      SocketFactory.emit('host', function (data) {
         // Join the game, get our player id back
         console.log("host", data);
         // $scope.playerId = data.player.id;
@@ -112,7 +112,7 @@
       console.log("startPlayer");
       vm.player = true;
       vm.joinData.playerId = vm.playerId; // Old ID if we have it
-      socket.emit('join', vm.joinData, function (err, game) {
+      SocketFactory.emit('join', vm.joinData, function (err, game) {
         if (!err) {
           console.log(vm.joinData.name, "joined", game.room);
           vm.loadGame(game);
@@ -128,7 +128,7 @@
     this.action = function (action) {
       vm.processing = true;
       console.log("Control action: " + action);
-      socket.emit(action, {}, function (err) {
+      SocketFactory.emit(action, {}, function (err) {
         if (err) {
           console.log("Callback error: ", err);
         }
@@ -140,18 +140,18 @@
     if (!vm.isPlayer) {
       vm.startHost();
     } else {
-      var inputRoom = document.getElementById("inputRoom");
+      var inputRoom = $document.getElementById("inputRoom");
       inputRoom.focus();
-      setTimeout(function () { inputRoom.select(); }, 10);
+      $timeout(function () { inputRoom.select(); }, 10);
 
     }
 
-    socket.on('game', function (gameData) {
+    SocketFactory.on('game', function (gameData) {
       console.log("GameCtrl -> game received");
       vm.loadGame(gameData);
     });
 
-    socket.on('alert', function(data){
+    SocketFactory.on('alert', function(data){
         console.log("Alert", data.level, ":", data.message);
         vm.errors.push(data);
         $scope.$digest();
@@ -160,19 +160,21 @@
 
     // Special case to use $scope
     $scope.$on('$destroy', function (event) {
-      socket.removeAllListeners();
+      SocketFactory.removeAllListeners();
       // or something like
       // socket.removeListener(this);
     });
 
   }
 
-  function DrawingDirective ($document, socket) {
+  function DrawingDirective ($document, SocketFactory) {
     return {
-      template: "<table ng-show='{{position}} <= 0' style='margin:auto;' class=''> <tr style='height:25px'> <td ng-repeat='c in colors' bgcolor='{{c}}' ng-class='{\"colorPicked\": c == color }' width=25px ng-click='changeColor(c)'> </tr> </table>" +
-        "<canvas width={{width}}px height={{height}}px scale={{scale}} resize ng-style='style()' class='drawing'></canvas>" +
-        "<button ng-show='{{position}} <= 0' class='btn btn-block btn-default text-uppercase' ng-click='submitPicture()' type='submit'>Submit</button>",
-      restrict: "A",
+      template: [
+        "<table ng-show='{{position}} <= 0' style='margin:auto;' class=''> <tr style='height:25px'> <td ng-repeat='c in colors' bgcolor='{{c}}' ng-class='{\"colorPicked\": c == color }' width=25px ng-click='changeColor(c)'> </tr> </table>",
+        "<canvas width={{width}}px height={{height}}px scale={{scale}} resize ng-style='style()' class='drawing'></canvas>",
+        "<button ng-show='{{position}} <= 0' class='btn btn-block btn-default text-uppercase' ng-click='submitPicture()' type='submit'>Submit</button>"
+      ].join(''),
+      restrict: "EA",
       transclude: true,
       scope: {
         "scale": "=scale",
@@ -346,7 +348,7 @@
 
         var vote = function (event) {
           console.log("Voting", scope.drawing.votingRound, scope.drawing.position);
-          socket.emit('vote', {
+          SocketFactory.emit('vote', {
             "votingRound": scope.drawing.votingRound,
             position: scope.drawing.position
           }, function (err, game) {
@@ -374,7 +376,7 @@
         scope.submitPicture = function () {
           scope.drawing.playerId = scope.$parent.playerId;
           console.log("sending", scope.drawing);
-          socket.emit('drawing', scope.drawing, function (err, game) {
+          SocketFactory.emit('drawing', scope.drawing, function (err, game) {
             console.log(err, game);
             scope.error = err;
             if(game){
@@ -389,7 +391,7 @@
           var data = {};
           // data.player = $scope.linesArray;
           console.log("sending", scope.linesArray);
-          socket.emit('vote', data, function (err, game) {
+          SocketFactory.emit('vote', data, function (err, game) {
             console.log(err, game);
             // TODO: Make the error display
 
@@ -449,7 +451,7 @@
 
         };
 
-        socket.on('game', function (gameData) {
+        SocketFactory.on('game', function (gameData) {
           console.log("Drawing -> game received");
           if(gameData.state.name in ['prep', 'result']) clearCanvas();
           scope.updatePictures(gameData);
@@ -488,7 +490,7 @@
 
   angular
     .module('doodoodleApp', ['ngCookies'])
-    .factory('socket', SocketFactory)
+    .factory('SocketFactory', SocketFactory)
     .controller('GameCtrl', GameCtrl)
     .directive("drawing", DrawingDirective)
     .directive('resize', ResizeDirective);
