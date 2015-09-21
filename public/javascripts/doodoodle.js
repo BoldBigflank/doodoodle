@@ -62,6 +62,12 @@
 
     this.playerId = ($cookies.get("playerId") !== undefined) ? $cookies.get("playerId") : generatePlayerId();
 
+    this.pushError = function(err){
+      vm.errors.push(err);
+      $timeout(popError, 3500);
+      $scope.$digest();
+    };
+
     var popError = function(){
       vm.errors.shift();
       $scope.$digest();
@@ -131,7 +137,7 @@
       SocketFactory.emit(action, {}, function (err) {
         if (err) {
           console.log("Callback error: ", err);
-          vm.errors.push(err);
+          vm.pushError(err);
         }
         vm.processing = false;
         $scope.$digest();
@@ -346,7 +352,8 @@
             "votingRound": scope.drawing.votingRound,
             position: scope.drawing.position
           }, function (err) {
-            if(err) scope.$parent.vm.errors.push(err);
+            if(err) scope.$parent.vm.pushError(err);
+            
             console.log("Vote callback:", err, game);
           });
         };
@@ -372,7 +379,8 @@
           scope.drawing.playerId = scope.$parent.vm.playerId;
           console.log("sending", scope.drawing);
           SocketFactory.emit('drawing', scope.drawing, function (err) {
-            if(err) scope.$parent.vm.errors.push(err);
+            console.log(err);
+            if(err) scope.$parent.vm.pushError(err);
           });
         };
 

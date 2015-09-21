@@ -47,7 +47,7 @@ io.on('connection', function (socket) {
     socket.on('join', function(data, cb){
         // This is called manually when the client has loaded
         doodoodle.join(socket.id, data, function(err, game){
-            if (err) { return cb(err); }
+            if (err) { return cb({"level":"error", "message":err}); }
             else{
                 socket.join(game.room);
                 console.log(game.room, "--> Player", data.name, "joined");
@@ -62,7 +62,7 @@ io.on('connection', function (socket) {
     socket.on('host', function(cb){
         // This is called manually when the client has loaded
         doodoodle.host(socket.id, function(err, res){
-            if (err) { return cb(err); }
+            if (err) { return cb({"level":"error", "message":err}); }
             else{
                 socket.join(res.room); // Host still listens to this channel
                 console.log(res.room, "--> Created");
@@ -80,7 +80,7 @@ io.on('connection', function (socket) {
             var gameRoom = roomData.gameRoom;
             
             doodoodle.start(gameRoom, function(err, game){
-                if (err) { return cb(err); }
+                if (err) { return cb({"level":"error", "message":err}); }
                 else {
                     console.log(gameRoom, "--> Start", playerId);
                     // send the game in its new state
@@ -98,7 +98,7 @@ io.on('connection', function (socket) {
             var gameRoom = roomData.gameRoom;
             console.log("Saving",playerId,gameRoom);
             doodoodle.saveDrawing(playerId, gameRoom, data, function(err, messages){
-                if (err) { return cb(err); }
+                if (err) { return cb({"level":"error", "message":err}); }
                 console.log(gameRoom, "--> Drawing", playerId);
                 for(var i in messages){
                     message = messages[i];
@@ -118,8 +118,7 @@ io.on('connection', function (socket) {
             var gameRoom = roomData.gameRoom;
             
             doodoodle.vote(playerId, gameRoom, data.votingRound, data.position, function(err, game){
-                if (err) console.log(err);
-                if (err) { return cb(err); }
+                if (err) { return cb({"level":"error", "message":err}); }
                 console.log(gameRoom, "--> Vote", data.votingRound, data.position);
                 for(var i in messages){
                     message = messages[i];
