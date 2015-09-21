@@ -131,6 +131,7 @@
       SocketFactory.emit(action, {}, function (err) {
         if (err) {
           console.log("Callback error: ", err);
+          vm.errors.push(err);
         }
         vm.processing = false;
         $scope.$digest();
@@ -149,13 +150,6 @@
     SocketFactory.on('game', function (gameData) {
       console.log("GameCtrl -> game received");
       vm.loadGame(gameData);
-    });
-
-    SocketFactory.on('alert', function(data){
-        console.log("Alert", data.level, ":", data.message);
-        vm.errors.push(data);
-        $scope.$digest();
-        $timeout(popError, 3500);
     });
 
     // Special case to use $scope
@@ -351,7 +345,8 @@
           SocketFactory.emit('vote', {
             "votingRound": scope.drawing.votingRound,
             position: scope.drawing.position
-          }, function (err, game) {
+          }, function (err) {
+            if(err) scope.$parent.vm.errors.push(err);
             console.log("Vote callback:", err, game);
           });
         };
@@ -376,14 +371,8 @@
         scope.submitPicture = function () {
           scope.drawing.playerId = scope.$parent.vm.playerId;
           console.log("sending", scope.drawing);
-          SocketFactory.emit('drawing', scope.drawing, function (err, game) {
-            console.log(err, game);
-            scope.error = err;
-            if(game){
-              // If there are more to do, replace this with them.
-              clearCanvas();
-              scope.updatePictures(game);
-            }
+          SocketFactory.emit('drawing', scope.drawing, function (err) {
+            if(err) scope.$parent.vm.errors.push(err);
           });
         };
 

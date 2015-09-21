@@ -45,11 +45,9 @@ io.on('connection', function (socket) {
 
     // User Joins
     socket.on('join', function(data, cb){
-        // TODO: Get the user's previous id and replace it in the db
         // This is called manually when the client has loaded
-
         doodoodle.join(socket.id, data, function(err, game){
-            if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
+            if (err) { return cb(err); }
             else{
                 socket.join(game.room);
                 console.log(game.room, "--> Player", data.name, "joined");
@@ -64,7 +62,7 @@ io.on('connection', function (socket) {
     socket.on('host', function(cb){
         // This is called manually when the client has loaded
         doodoodle.host(socket.id, function(err, res){
-            if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
+            if (err) { return cb(err); }
             else{
                 socket.join(res.room); // Host still listens to this channel
                 console.log(res.room, "--> Created");
@@ -82,7 +80,7 @@ io.on('connection', function (socket) {
             var gameRoom = roomData.gameRoom;
             
             doodoodle.start(gameRoom, function(err, game){
-                if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
+                if (err) { return cb(err); }
                 else {
                     console.log(gameRoom, "--> Start", playerId);
                     // send the game in its new state
@@ -99,12 +97,16 @@ io.on('connection', function (socket) {
             var playerId = roomData.playerId;
             var gameRoom = roomData.gameRoom;
             console.log("Saving",playerId,gameRoom);
-            doodoodle.saveDrawing(playerId, gameRoom, data, function(err, game){
-                if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
+            doodoodle.saveDrawing(playerId, gameRoom, data, function(err, messages){
+                if (err) { return cb(err); }
                 console.log(gameRoom, "--> Drawing", playerId);
-                io.to(gameRoom).emit('game', game);
-                io.to(game.host).emit('event', {"event":"drawing"});
-                return cb(null, game); // Should we be sending the game back?
+                for(var i in messages){
+                    message = messages[i];
+                    io.to(message.recipient).emit(message.channel, message.data);
+                }
+                // io.to(gameRoom).emit('game', game);
+                // io.to(game.host).emit('event', {"event":"drawing"});
+                return cb(null); // Should we be sending the game back?
             });
         });
     });
@@ -117,10 +119,15 @@ io.on('connection', function (socket) {
             
             doodoodle.vote(playerId, gameRoom, data.votingRound, data.position, function(err, game){
                 if (err) console.log(err);
-                if (err) { socket.emit("alert", {"level":"Error", "message":err}); return cb(err); }
+                if (err) { return cb(err); }
                 console.log(gameRoom, "--> Vote", data.votingRound, data.position);
-                io.to(gameRoom).emit('game', game);
-                io.to(game.host).emit('event', {"event":"vote"});
+                for(var i in messages){
+                    message = messages[i];
+                    io.to(message.recipient).emit(message.channel, message.data);
+                }
+                return cb(null);
+                // io.to(gameRoom).emit('game', game);
+                // io.to(game.host).emit('event', {"event":"vote"});
             });
         });
     });

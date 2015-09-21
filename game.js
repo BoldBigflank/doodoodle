@@ -293,6 +293,7 @@ exports.start = function(room, cb){
 };
 
 exports.saveDrawing = function(playerId, room, data, cb){
+    var messages = [];
     getGame(room, function(game){
         if(!game) return cb("game not found", null);
         var player = _.findWhere( game.players, {id: playerId} );
@@ -301,19 +302,22 @@ exports.saveDrawing = function(playerId, room, data, cb){
         if(!drawing) { return cb("You are not a part of this round", null); }
         drawing.lines = data.lines;
         drawing.submitted = true;
+        messages.push({"recipient":game.host, "channel":"event", "data":"{event:'drawing'}"});
 
         if (_.findWhere( game.drawings, {submitted: false, playerId:player.id} ) === undefined) {
             player.waiting = true;
         }
 
-        if (_.findWhere( game.players, {waiting: false, state:'active'} ) === undefined) {
+        if (_.findWhere( game.players, {waiting: false, state:'active'} ) === undefined) { // Drawings are done
             setState(game, STATE.VOTE, function(game){
                 postGame(game); // Export to Firebase
-                cb(null, game);
+                messages.push({ "recipient":game.room, "channel":"game", "data":game });
+                cb(null, messages);
             });
         } else {
             postGame(game); // Export to Firebase
-            cb(null, game);
+            // messages.push({ "recipient":game.room, "channel":"game", "data":game });
+            cb(null, messages);
         }
 
         // EXTRA Put a line from the drawing into the seeds
@@ -337,12 +341,14 @@ exports.saveDrawing = function(playerId, room, data, cb){
 // };
 
 exports.vote = function(playerId, room, votingRound, position, cb){
+    var messages = [];
     console.log("game.vote", playerId, room, votingRound, position);
     getGame(room, function(game){
         if(!game) return cb("game not found", null);
         if(game.votingRound != votingRound) return cb("Too late, wrong round");
         var player = _.findWhere( game.players, {id: playerId} );
         if(!player) return cb("player not found", null);
+        messages.push({"recipient":game.host, "channel":"event", "data":"{event:'drawing'}"});
         var drawingsThisRound = _.where(game.drawings, {votingRound:votingRound});
         // var allVotes = _.filter(game.votes, function(vote){ return vote.votingRound == votingRound; });
         
@@ -365,11 +371,13 @@ exports.vote = function(playerId, room, votingRound, position, cb){
             if(_.findWhere(game.drawings, {votingRound:game.votingRound} ) === undefined){ // No more drawings
                 setState(game, STATE.RESULT, function(game){
                     postGame(game); // Export to Firebase
+                    messages.push({ "recipient":game.room, "channel":"game", "data":game });
                     cb(null, game);
                 });
             }else { // Next voting round
                 setState(game, STATE.VOTE, function(game){
                     postGame(game); // Export to Firebase
+                    messages.push({ "recipient":game.room, "channel":"game", "data":game });
                     cb(null, game);
                 });
             }
