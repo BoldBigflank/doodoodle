@@ -84,6 +84,15 @@
       
     };
 
+    var socketReturn = function (err) {
+        if (err) {
+          console.log("Callback error: ", err);
+          vm.pushError(err);
+        }
+        vm.processing = false;
+        $scope.$digest();
+      };
+
     $interval(updateTime, 1000);
 
     this.loadGame = function (gameData) {
@@ -106,12 +115,7 @@
     this.startHost = function () {
       console.log("startHost");
       vm.player = false;
-      SocketFactory.emit('host', function (data) {
-        // Join the game, get our player id back
-        console.log("host", data);
-        // $scope.playerId = data.player.id;
-        vm.loadGame(data.game);
-      });
+      SocketFactory.emit('host', socketReturn);
     };
 
     this.startPlayer = function () {
@@ -134,14 +138,7 @@
     this.action = function (action) {
       vm.processing = true;
       console.log("Control action: " + action);
-      SocketFactory.emit(action, {}, function (err) {
-        if (err) {
-          console.log("Callback error: ", err);
-          vm.pushError(err);
-        }
-        vm.processing = false;
-        $scope.$digest();
-      });
+      SocketFactory.emit(action, {}, SocketReturn);
     };
 
     if (!vm.isPlayer) {
@@ -351,11 +348,7 @@
           SocketFactory.emit('vote', {
             "votingRound": scope.drawing.votingRound,
             position: scope.drawing.position
-          }, function (err) {
-            if(err) scope.$parent.vm.pushError(err);
-            
-            console.log("Vote callback:", err, game);
-          });
+          }, socketReturn);
         };
 
         // *** Mouse Controls ***
@@ -378,10 +371,7 @@
         scope.submitPicture = function () {
           scope.drawing.playerId = scope.$parent.vm.playerId;
           console.log("sending", scope.drawing);
-          SocketFactory.emit('drawing', scope.drawing, function (err) {
-            console.log(err);
-            if(err) scope.$parent.vm.pushError(err);
-          });
+          SocketFactory.emit('drawing', scope.drawing, socketReturn);
         };
 
         scope.updatePictures = function (gameData) {

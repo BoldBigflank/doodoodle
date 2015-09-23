@@ -68,7 +68,7 @@ io.on('connection', function (socket) {
                 console.log(res.room, "--> Created");
                 io.to(res.room).emit('game', res );
             }
-            return cb(res);
+            return cb(null);
         });
     });
 
