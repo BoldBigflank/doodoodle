@@ -36,7 +36,8 @@ block content
                 h3 Go to 
                   strong http://ggez.tv
                 h3 Join room 
-                  strong {{ vm.game.room }}
+                  strong {{ vm.game.room }} 
+
                 a(href="/player")
                   button.btn.btn-default.btn-xs(type='button') Wait, I'm a player!
               div.col-sm-12.text-center(ng-show="vm.game.state.name == 'draw'")
@@ -136,3 +137,4 @@ block content
                 td {{$index + 1}}
                 td {{p.name}}
                 td {{p.score}}
+    small.pull-right {{ vm.playerId }}

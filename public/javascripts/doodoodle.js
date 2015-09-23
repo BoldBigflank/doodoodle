@@ -85,13 +85,13 @@
     };
 
     var socketReturn = function (err) {
-        if (err) {
-          console.log("Callback error: ", err);
-          vm.pushError(err);
-        }
-        vm.processing = false;
-        $scope.$digest();
-      };
+      if (err) {
+        console.log("Callback error: ", err);
+        vm.pushError(err);
+      }
+      vm.processing = false;
+      $scope.$digest();
+    };
 
     $interval(updateTime, 1000);
 
@@ -115,7 +115,7 @@
     this.startHost = function () {
       console.log("startHost");
       vm.player = false;
-      SocketFactory.emit('host', socketReturn);
+      SocketFactory.emit('host', vm.playerId,  socketReturn);
     };
 
     this.startPlayer = function () {
@@ -348,7 +348,7 @@
           SocketFactory.emit('vote', {
             "votingRound": scope.drawing.votingRound,
             position: scope.drawing.position
-          }, socketReturn);
+          }, scope.$parent.vm.socketReturn);
         };
 
         // *** Mouse Controls ***
@@ -371,7 +371,7 @@
         scope.submitPicture = function () {
           scope.drawing.playerId = scope.$parent.vm.playerId;
           console.log("sending", scope.drawing);
-          SocketFactory.emit('drawing', scope.drawing, socketReturn);
+          SocketFactory.emit('drawing', scope.drawing, scope.$parent.vm.socketReturn);
         };
 
         scope.updatePictures = function (gameData) {

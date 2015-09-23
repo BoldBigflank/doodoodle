@@ -80,6 +80,10 @@ var deleteGame = function(game) {
   gameRef.set(null);
 };
 
+var deleteGames = function() {
+  var gamesRef = new Firebase("https://doodoodle.firebaseio.com/games");
+  gamesRef.set(null);
+};
 
 var newRound = function (game, cb) {
     var drawings = []; // An array of Drawing objects
@@ -206,15 +210,15 @@ var pushSeed = function(seed, cb){
   seedRef.push(seed);
 };
 
-exports.host = function(playerId, cb){
+exports.host = function(socketId, playerId, cb){
     // Create a game, but do not add the player to it
-    if(playerId === undefined) {
-        cb("playerId not found");
+    if(socketId === undefined) {
+        cb("socketId not found");
         return;
     }
 
     game = newGame(playerId);
-    setSocketToGame(playerId, null, game.room);
+    setSocketToGame(socketId, playerId, game.room);
     postGame(game); // Export to Firebase
     cb(null, game);
 };
@@ -391,10 +395,10 @@ exports.vote = function(playerId, room, votingRound, position, cb){
 
 exports.leave = function(playerId, room, cb){
     getGame (room, function(game) {
-        if(!game) return;
+        if(!game){ return; } 
         // Remove their player
         var player = _.findWhere(game.players, {id:playerId});
-        if(player){
+        if(player !== undefined){
             // TODO: What should we do when a person leaves?
             if(player.state == "active"){
               player.state = "disconnect";
@@ -404,12 +408,11 @@ exports.leave = function(playerId, room, cb){
             cb(null, {players: game.players, state: game.state, turn: game.turn});
             setSocketToGame(playerId, null, null);
         }
-        else if (game.host == playerId) {
+        if (game.host == playerId) {
             console.log("Host has left, deleting game", room);
             deleteGame(game);
             cb(null);
         }
-        
     });
     
 };
@@ -423,8 +426,8 @@ exports.getState = function(){ return game.state; };
 exports.getRound = function(){ return game.round; };
 
 exports.reset = function(cb){
-    postGame(game); // Export to Firebase
-    cb(null, game);
+    deleteGames(); // Export to Firebase
+    cb(null);
 };
 
 // A Debug DRAW room

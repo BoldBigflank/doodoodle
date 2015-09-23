@@ -28,6 +28,13 @@ app.get('/host', function(req, res){
     res.render('start.jade', { title: 'GGEZ.tv', isPlayer:false });
 });
 
+app.get('/reset', function(req, res){
+    doodoodle.reset(function (){
+        console.log("RESET");
+    });
+    res.render('start.jade', { title: 'GGEZ.tv', isPlayer:false });
+});
+
 
 io.on('connection', function (socket) {
     console.log("Socket", socket.id, "connected");
@@ -59,9 +66,9 @@ io.on('connection', function (socket) {
         });
     });
 
-    socket.on('host', function(cb){
+    socket.on('host', function(playerId, cb){
         // This is called manually when the client has loaded
-        doodoodle.host(socket.id, function(err, res){
+        doodoodle.host(socket.id, playerId, function(err, res){
             if (err) { return cb({"level":"error", "message":err}); }
             else{
                 socket.join(res.room); // Host still listens to this channel
@@ -135,10 +142,15 @@ io.on('connection', function (socket) {
     socket.on('disconnect', function(){
         console.log("Socket", socket.id, "disconnected");
         doodoodle.socketToGame(socket.id, function(roomData){
-            if(!roomData) return;
+            console.log(roomData);
+            if(!roomData){
+                console.log("Couldn't find room");
+                return;
+            };
             var playerId = roomData.playerId;
             var gameRoom = roomData.gameRoom;
-            doodoodle.leave(playerId, gameRoom, function(err, game){
+            doodoodle.leave(playerId, gameRoom, function(err){
+                if(err) console.log("Error during disconnect:", err);
                 console.log(gameRoom, "--> Disconnect", playerId);
                 if(game){
                     io.to(gameRoom).emit('game', game);
