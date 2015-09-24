@@ -89,13 +89,14 @@
     this.loadGame = function (gameData) {
       vm.game = gameData;
       console.log("Game is now", vm.game);
-      for (var x in vm.game.players) {
-        var p = vm.game.players[x];
-        if(p.id == vm.playerId){
-          vm.player = p;
-          break;
-        }
-      }
+      vm.player = vm.game.players[vm.playerId];
+      // for (var x in vm.game.players) {
+      //   var p = vm.game.players[x];
+      //   if(p.id == vm.playerId){
+      //     vm.player = p;
+      //     break;
+      //   }
+      // }
 
       // Check the time difference
       vm.timeDifference = gameData.now - new Date().getTime();

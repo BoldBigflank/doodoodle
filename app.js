@@ -149,12 +149,11 @@ io.on('connection', function (socket) {
             };
             var playerId = roomData.playerId;
             var gameRoom = roomData.gameRoom;
-            doodoodle.leave(playerId, gameRoom, function(err){
-                if(err) console.log("Error during disconnect:", err);
-                console.log(gameRoom, "--> Disconnect", playerId);
-                if(game){
-                    io.to(gameRoom).emit('game', game);
-                    io.to(game.host).emit('event', {"event":"disconnect"});
+            doodoodle.leave(playerId, gameRoom, function(err, messages){
+                for(var i in messages){
+                    message = messages[i];
+                    // console.log("Sending to", message.recipient, "on channel", message.channel);
+                    io.to(message.recipient).emit(message.channel, message.data);
                 }
             });
         });

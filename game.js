@@ -184,7 +184,8 @@ var setState = function(game, state, cb){
     } else if (state == STATE.RESULT) {
         var scores = _.groupBy(game.votes, function(vote){return vote.ownerId;});
         _.each(scores, function(value, key, list){
-            var player = _.find(game.players, {"id":key});
+            // var player = _.find(game.players, {"id":key});
+            var player = game.players[key];
             player.score += value.length;
         });
         cb(game);
@@ -243,7 +244,9 @@ exports.join = function(socketId, data, cb){
             return;
         }
 
-        var player = _.findWhere( game.players, {id: playerId} );
+        // var player = _.findWhere( game.players, {id: playerId} );
+        if(!game.players) game.players = [];
+        var player = game.players[playerId];
         if(player) player.name = name;
         
         if( typeof player === 'undefined'){
@@ -263,7 +266,7 @@ exports.join = function(socketId, data, cb){
               game.players = [];
             }
 
-            game.players.push(player); // Players for the game
+            game.players[player.id] = player; // Players for the game
         }
         setSocketToGame(socketId, player.id, game.room);
         player.state = "active"; // They've joined or rejoined
@@ -301,7 +304,8 @@ exports.saveDrawing = function(playerId, room, data, cb){
     var messages = [];
     getGame(room, function(game){
         if(!game) return cb("game not found", null);
-        var player = _.findWhere( game.players, {id: playerId} );
+        // var player = _.findWhere( game.players, {id: playerId} );
+        var player = game.players[playerId];
         if(!player) return cb("player not found", null);
         var drawing = _.findWhere( game.drawings, {playerId: player.id, votingRound: data.votingRound, position: data.position});
         if(!drawing) { return cb("You are not a part of this round", null); }
@@ -351,7 +355,8 @@ exports.vote = function(playerId, room, votingRound, position, cb){
     getGame(room, function(game){
         if(!game) return cb("game not found", null);
         if(game.votingRound != votingRound) return cb("Too late, wrong round");
-        var player = _.findWhere( game.players, {id: playerId} );
+        // var player = _.findWhere( game.players, {id: playerId} );
+        var player = game.players[playerId];
         if(!player) return cb("player not found", null);
         messages.push({"recipient":game.host, "channel":"event", "data":"{event:'drawing'}"});
         var drawingsThisRound = _.where(game.drawings, {votingRound:votingRound});
@@ -396,10 +401,12 @@ exports.vote = function(playerId, room, votingRound, position, cb){
 };
 
 exports.leave = function(playerId, room, cb){
+    messages = [];
     getGame (room, function(game) {
         if(!game){ return; } 
         // Remove their player
-        var player = _.findWhere(game.players, {id:playerId});
+        // var player = _.findWhere(game.players, {id:playerId});
+        var player = (game.players) ? game.players[playerId] : undefined;
         if(player !== undefined){
             // TODO: What should we do when a person leaves?
             if(player.state == "active"){
@@ -407,7 +414,8 @@ exports.leave = function(playerId, room, cb){
             }
             
             postGame(game);
-            cb(null, {players: game.players, state: game.state, turn: game.turn});
+            messages.push({"recipient":game.room, "channel":"game", "data":game});
+            cb(null, messages);
             setSocketToGame(playerId, null, null);
         }
         if (game.host == playerId) {
