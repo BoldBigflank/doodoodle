@@ -30,7 +30,7 @@
   function GameCtrl ($scope, $document, $timeout, $interval, $cookies, SocketFactory) {
     var vm = this;
     this.playerId = 0;
-    this.joinData = {"name":"Alex", "room":"DRAW"}; // DEBUG DATA
+    this.joinData = {"name":"", "room":""};
     this.player = null;
     this.isPlayer = isPlayer;
     this.errors = [];
