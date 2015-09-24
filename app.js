@@ -80,7 +80,7 @@ io.on('connection', function (socket) {
     });
 
     // Player calls to start the game
-    socket.on('start', function(data, cb){
+    socket.on('start', function(cb){
         doodoodle.socketToGame(socket.id, function(roomData){
             if(!roomData) return cb("Refresh");
             var playerId = roomData.playerId;
@@ -103,12 +103,12 @@ io.on('connection', function (socket) {
             if(!roomData) return cb("Refresh");
             var playerId = roomData.playerId;
             var gameRoom = roomData.gameRoom;
-            console.log("Saving",playerId,gameRoom);
             doodoodle.saveDrawing(playerId, gameRoom, data, function(err, messages){
                 if (err) { return cb({"level":"error", "message":err}); }
                 console.log(gameRoom, "--> Drawing", playerId);
                 for(var i in messages){
                     message = messages[i];
+                    // console.log("Sending to", message.recipient, "on channel", message.channel);
                     io.to(message.recipient).emit(message.channel, message.data);
                 }
                 // io.to(gameRoom).emit('game', game);
@@ -124,11 +124,12 @@ io.on('connection', function (socket) {
             var playerId = roomData.playerId;
             var gameRoom = roomData.gameRoom;
             
-            doodoodle.vote(playerId, gameRoom, data.votingRound, data.position, function(err, game){
+            doodoodle.vote(playerId, gameRoom, data.votingRound, data.position, function(err, messages){
                 if (err) { return cb({"level":"error", "message":err}); }
                 console.log(gameRoom, "--> Vote", data.votingRound, data.position);
                 for(var i in messages){
                     message = messages[i];
+                    // console.log("Sending to", message.recipient, "on channel", message.channel);
                     io.to(message.recipient).emit(message.channel, message.data);
                 }
                 return cb(null);
@@ -142,7 +143,6 @@ io.on('connection', function (socket) {
     socket.on('disconnect', function(){
         console.log("Socket", socket.id, "disconnected");
         doodoodle.socketToGame(socket.id, function(roomData){
-            console.log(roomData);
             if(!roomData){
                 console.log("Couldn't find room");
                 return;

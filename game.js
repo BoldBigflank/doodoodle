@@ -233,7 +233,8 @@ exports.join = function(socketId, data, cb){
     }
     room = room.toUpperCase();
     getGame(room, function(game){
-        if(typeof game == "undefined") {
+        console.log(game);
+        if(!game) {
             cb("Room " + room + " not found");
             return;
         }
@@ -320,7 +321,7 @@ exports.saveDrawing = function(playerId, room, data, cb){
             });
         } else {
             postGame(game); // Export to Firebase
-            // messages.push({ "recipient":game.room, "channel":"game", "data":game });
+            messages.push({ "recipient":game.room, "channel":"game", "data":game });
             cb(null, messages);
         }
 
@@ -376,18 +377,19 @@ exports.vote = function(playerId, room, votingRound, position, cb){
                 setState(game, STATE.RESULT, function(game){
                     postGame(game); // Export to Firebase
                     messages.push({ "recipient":game.room, "channel":"game", "data":game });
-                    cb(null, game);
+                    cb(null, messages);
                 });
             }else { // Next voting round
                 setState(game, STATE.VOTE, function(game){
                     postGame(game); // Export to Firebase
                     messages.push({ "recipient":game.room, "channel":"game", "data":game });
-                    cb(null, game);
+                    cb(null, messages);
                 });
             }
         } else {
             postGame(game); // Export to Firebase
-            cb(null, game);
+            messages.push({"recipient":game.room, "channel":"game", "data":game});
+            cb(null, messages);
         }
     });
     

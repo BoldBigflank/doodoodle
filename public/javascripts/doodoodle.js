@@ -18,19 +18,10 @@
     };
     SocketFactory.emit = function (eventName, data, callback) {
       if (typeof (callback) === 'function') {
-        socket.emit(eventName, data, function () {
-          var args = arguments;
-          if (callback) {
-            callback.apply(socket, args);
-          }
-        });
+        socket.emit(eventName, data, callback);
       } else {
-        socket.emit(eventName, function () {
-          var args = arguments;
-          if (callback) {
-            callback.apply(socket, args);
-          }
-        });
+        callback = data;
+        socket.emit(eventName, callback);
       }
     };
     return SocketFactory;
@@ -84,7 +75,7 @@
       
     };
 
-    var socketReturn = function (err) {
+    this.socketReturn = function (err) {
       if (err) {
         console.log("Callback error: ", err);
         vm.pushError(err);
@@ -115,7 +106,7 @@
     this.startHost = function () {
       console.log("startHost");
       vm.player = false;
-      SocketFactory.emit('host', vm.playerId,  socketReturn);
+      SocketFactory.emit('host', vm.playerId,  vm.socketReturn);
     };
 
     this.startPlayer = function () {
@@ -123,6 +114,7 @@
       vm.player = true;
       vm.joinData.playerId = vm.playerId; // Old ID if we have it
       SocketFactory.emit('join', vm.joinData, function (err, game) {
+        if(err) vm.pushError(err);
         if (!err) {
           console.log(vm.joinData.name, "joined", game.room);
           vm.loadGame(game);
@@ -138,7 +130,7 @@
     this.action = function (action) {
       vm.processing = true;
       console.log("Control action: " + action);
-      SocketFactory.emit(action, {}, SocketReturn);
+      SocketFactory.emit(action, vm.socketReturn);
     };
 
     if (!vm.isPlayer) {
@@ -388,11 +380,16 @@
               return;
             }
 
-            var newLines = _.without(gameDrawing.seed, scope.drawing.seed);
-            if (newLines) {
-              draw(newLines);
-              scope.drawing.seed = gameDrawing.seed;
+            if(scope.drawing.votingRound != gameDrawing.votingRound){
+              // We must display a new picture to draw
+              clearCanvas();
+              draw(gameDrawing.seed);
             }
+            // var newLines = _.without(gameDrawing.seed, scope.drawing.seed);
+            // if (newLines) {
+            //   draw(newLines);
+            //   scope.drawing.seed = gameDrawing.seed;
+            // }
 
             scope.drawing.seed = gameDrawing.seed;
             scope.drawing.playerId = gameDrawing.player;
