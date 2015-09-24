@@ -29,20 +29,25 @@
 
   function GameCtrl ($scope, $document, $timeout, $interval, $cookies, SocketFactory) {
     var vm = this;
+    // Input data
     this.playerId = 0;
     this.joinData = {"name":"", "room":""};
-    this.player = null;
-    this.isPlayer = isPlayer;
-    this.errors = [];
-    this.drawingData = "drawingData";
-    this.timeDifference = 0;
-    
+
     if($cookies.get("name")){
       this.joinData.name = $cookies.get("name");
     }
     if($cookies.get("room")){
       this.joinData.room = $cookies.get("room");
     }
+    
+
+    // Computed data
+    this.player = null;
+    this.isPlayer = isPlayer;
+    this.errors = [];
+    this.drawingData = "drawingData";
+    this.timeDifference = 0;
+    
     
     // FIX: Business logic should be in a Service
     var generatePlayerId = function(){
