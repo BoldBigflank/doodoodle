@@ -235,7 +235,6 @@ exports.join = function(socketId, data, cb){
     }
     room = room.toUpperCase();
     getGame(room, function(game){
-        console.log(game);
         if(!game) {
             cb("Room " + room + " not found");
             return;
