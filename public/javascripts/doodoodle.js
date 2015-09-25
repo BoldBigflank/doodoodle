@@ -150,6 +150,7 @@
 
     SocketFactory.on('game', function (gameData) {
       console.log("GameCtrl -> game received");
+      console.log(JSON.stringify(gameData));
       vm.loadGame(gameData);
     });
 
@@ -253,7 +254,8 @@
           ctx.stroke();
         };
 
-        var draw = function (lines) {
+        var draw = function (compressedLines) {
+          var lines = JSON.parse(LZString.decompressFromUTF16( compressedLines ));
           for (var x in lines) {
             var line = lines[x];
             var color = "#000"; // Start with black
@@ -368,8 +370,13 @@
 
         scope.submitPicture = function () {
           scope.drawing.playerId = scope.$parent.vm.playerId;
-          console.log("sending", scope.drawing);
-          SocketFactory.emit('drawing', scope.drawing, scope.$parent.vm.socketReturn);
+          var submission = {
+            lines:LZString.compressToUTF16(JSON.stringify (scope.drawing.lines)),
+            votingRound:scope.drawing.votingRound,
+            position:scope.drawing.position
+          };
+          
+          SocketFactory.emit('drawing', submission, scope.$parent.vm.socketReturn);
         };
 
         scope.updatePictures = function (gameData) {
@@ -389,14 +396,11 @@
             if(scope.drawing.votingRound != gameDrawing.votingRound){
               // We must display a new picture to draw
               clearCanvas();
-              draw(gameDrawing.seed);
-            }
-            // var newLines = _.without(gameDrawing.seed, scope.drawing.seed);
-            // if (newLines) {
-            //   draw(newLines);
-            //   scope.drawing.seed = gameDrawing.seed;
-            // }
 
+              // var decompressedSeed = JSON.parse(LZString.decompressFromUTF16( gameDrawing.seed ));
+              draw( gameDrawing.seed );
+            }
+            
             scope.drawing.seed = gameDrawing.seed;
             scope.drawing.playerId = gameDrawing.player;
             scope.drawing.position = gameDrawing.position;

@@ -100,7 +100,7 @@ io.on('connection', function (socket) {
 
     socket.on('drawing', function(data, cb){
         doodoodle.socketToGame(socket.id, function(roomData){
-            if(!roomData) return cb("Refresh");
+            if(!roomData) return cb({"level":"error", "message":"Refresh"});
             var playerId = roomData.playerId;
             var gameRoom = roomData.gameRoom;
             doodoodle.saveDrawing(playerId, gameRoom, data, function(err, messages){
@@ -146,7 +146,7 @@ io.on('connection', function (socket) {
             if(!roomData){
                 console.log("Couldn't find room");
                 return;
-            };
+            }
             var playerId = roomData.playerId;
             var gameRoom = roomData.gameRoom;
             doodoodle.leave(playerId, gameRoom, function(err, messages){

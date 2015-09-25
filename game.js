@@ -1,5 +1,6 @@
-var _ = require('underscore'),
-  fs = require('fs');
+var _ = require('underscore');
+var fs = require('fs');
+var LZString = require('lz-string');
 var EventEmitter = require('events').EventEmitter;
 
 exports.eventEmitter = new EventEmitter();
@@ -98,10 +99,10 @@ var newRound = function (game, cb) {
     newDrawingSeeds(activePlayers.length, function(roundSeeds){
       for(var p in activePlayers){
           var player = activePlayers[p];
-          
+          var compressedSeed = LZString.compressToUTF16(JSON.stringify(roundSeeds[p]));
           var drawing = {
               playerId: player.id,
-              seed: roundSeeds[p],
+              seed: compressedSeed,
               position: 1,
               votingRound: votingRound,
               lines: null,
@@ -112,7 +113,7 @@ var newRound = function (game, cb) {
           partnerId = activePlayers[(p+1) % activePlayers.length ].id;
           var drawing2 = {
               playerId: partnerId,
-              seed: roundSeeds[p],
+              seed: compressedSeed,
               position: 2,
               votingRound: votingRound,
               lines: null,
@@ -309,7 +310,7 @@ exports.saveDrawing = function(playerId, room, data, cb){
         if(!player) return cb("player not found", null);
         var drawing = _.findWhere( game.drawings, {playerId: player.id, votingRound: data.votingRound, position: data.position});
         if(!drawing) { return cb("You are not a part of this round", null); }
-        drawing.lines = data.lines;
+        drawing.lines =  data.lines; // A compressed string
         drawing.submitted = true;
         messages.push({"recipient":game.host, "channel":"event", "data":"{event:'drawing'}"});
 
@@ -330,8 +331,9 @@ exports.saveDrawing = function(playerId, room, data, cb){
         }
 
         // EXTRA Put a line from the drawing into the seeds
-        if(drawing.lines) {
-            var seedLine = _.sample(drawing.lines);
+        if(data.lines) {
+            decompressedLines = JSON.parse( LZString.decompressFromUTF16(data.lines) );
+            var seedLine = _.sample(decompressedLines);
             if(seedLine)
                 pushSeed([seedLine.points]);
         }
