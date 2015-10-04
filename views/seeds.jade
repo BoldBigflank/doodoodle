@@ -1,0 +1,13 @@
+extends layout
+block stylesheets
+  script(src='/javascripts/seeds.js')
+
+
+block content
+  div(ng-controller='SeedsCtrl as vm')
+    script.
+      var isPlayer= #{isPlayer};
+    .row.row-offcanvas.row-offcanvas-right
+        div
+          .col-sm-12.col-md-9
+            div(width=450, height=600, scale=0.75, position=-1, drawing )

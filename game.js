@@ -6,6 +6,7 @@ var EventEmitter = require('events').EventEmitter;
 exports.eventEmitter = new EventEmitter();
 
 var Firebase = require("firebase");
+var firebaseUrl = "https://doodoodle.firebaseio.com/";
 
 // BOOMOIO Settings
 var maxPlayers = 6;
@@ -72,18 +73,62 @@ var getGame = function (room, cb) {
 };
 
 var postGame = function (game) {
-    var gameRef = new Firebase("https://doodoodle.firebaseio.com/games/" + game.room);
+    var gameRef = new Firebase(firebaseUrl + "games/" + game.room);
     gameRef.set(game);
 };
 
 var deleteGame = function(game) {
-  var gameRef = new Firebase("https://doodoodle.firebaseio.com/games/" + game.room);
+  var gameRef = new Firebase(firebaseUrl + "games/" + game.room);
   gameRef.set(null);
 };
 
 var deleteGames = function() {
-  var gamesRef = new Firebase("https://doodoodle.firebaseio.com/games");
+  var gamesRef = new Firebase(firebaseUrl + "games");
   gamesRef.set(null);
+};
+
+var approveSeed = function(seedId, cb){
+  var oldSeedRef = new Firebase(firebaseUrl + "seeds_list/" + seedId);
+  oldSeedRef.once('value', function(seed){
+    var newSeedRef = new Firebase(firebaseUrl + "seeds");
+    newSeedRef.push(seed.val());
+    oldSeedRef.set(null);
+    cb();
+  });
+};
+
+var deleteSeed = function(seedId, cb){
+  var seedRef = new Firebase(firebaseUrl + "seeds_list/" + seedId);
+  seedRef.set(null);
+  cb();
+};
+
+var getNextSeed = function(cb){
+    // Get a new seed to test
+    var seedsListRef = new Firebase(firebaseUrl + "seeds_list/");
+    seedsListRef.limitToFirst(1).once('value', function(seedsRef){
+        seedsRef.forEach(function(seed){
+            console.log(seed.key());
+            cb ({"seedId":seed.key(), "seed":seed.val()});
+        });
+    });
+};
+
+exports.updateSeed = function (data, cb){
+    console.log("updateSeed", data.action, data.seedId);
+    if(data.seedId && data.action == "approve"){
+        approveSeed(data.seedId, function(){
+            getNextSeed(cb);
+        });
+    }
+    else if(data.seedId && data.action == "reject"){
+        deleteSeed(data.seedId, function(){
+            getNextSeed(cb);
+        });
+    } else {
+        getNextSeed(cb);
+    }
+    
 };
 
 var newRound = function (game, cb) {
@@ -133,7 +178,7 @@ var newRound = function (game, cb) {
 };
 
 var newDrawingSeeds = function(count, cb) {
-    var seedRef = new Firebase("https://doodoodle.firebaseio.com/seeds_list");
+    var seedRef = new Firebase(firebaseUrl + "seeds");
     seedRef.once("value", function(data){
       seeds = data.val();
       cb(_.sample(seeds, count));
@@ -194,12 +239,12 @@ var setState = function(game, state, cb){
 };
 
 var setSocketToGame = function(socketId, playerId, gameRoom, cb){
-    var playerRef = new Firebase("https://doodoodle.firebaseio.com/players/" + socketId);
+    var playerRef = new Firebase(firebaseUrl + "players/" + socketId);
     playerRef.set({playerId:playerId, gameRoom:gameRoom}, cb);
 };
 
 exports.socketToGame = function(socketId, cb){
-    var playerRef = new Firebase("https://doodoodle.firebaseio.com/players/" + socketId);
+    var playerRef = new Firebase(firebaseUrl + "players/" + socketId);
     playerRef.once("value", function(data){
         console.log("Socket:", socketId, "Game:", data.val());
         cb(data.val());
@@ -208,7 +253,7 @@ exports.socketToGame = function(socketId, cb){
 };
 
 var pushSeed = function(seed, cb){
-  var seedRef = new Firebase("https://doodoodle.firebaseio.com/seeds_list");
+  var seedRef = new Firebase(firebaseUrl + "seeds_list");
   seedRef.push(seed);
 };
 
@@ -341,14 +386,6 @@ exports.saveDrawing = function(playerId, room, data, cb){
 
 };
 
-// var setWaiting = function(game){
-//     var drawingsThisRound = _.where(game.drawings, {votingRound:game.votingRound});
-//     var allVotes = _.flatten(_.pluck(drawingsThisRound, 'votes'));
-//     _.each(allVotes, function(playerId){
-//       var p = _.findWhere(game.players, {id:playerId});
-//       p.waiting = true;
-//     });
-// };
 
 exports.vote = function(playerId, room, votingRound, position, cb){
     var messages = [];

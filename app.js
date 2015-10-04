@@ -36,6 +36,11 @@ app.get('/reset', function(req, res){
 });
 
 
+app.get('/seeds', function(req, res){
+    res.render('seeds.jade', { title: 'GGEZ.tv Seeds', isPlayer:false });
+});
+
+
 io.on('connection', function (socket) {
     console.log("Socket", socket.id, "connected");
 
@@ -137,6 +142,12 @@ io.on('connection', function (socket) {
                 // io.to(game.host).emit('event', {"event":"vote"});
             });
         });
+    });
+
+    // Seed is accepted/rejected from tool
+    socket.on('seed', function(data, cb){
+        doodoodle.updateSeed(data, cb);
+        // Sends back another seed
     });
 
     // User Leaves
