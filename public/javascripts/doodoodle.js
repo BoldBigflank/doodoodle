@@ -237,7 +237,7 @@
           ctx.strokeStyle = (color) ? color : scope.color;
           ctx.lineJoin = "round";
           ctx.lineCap = 'round';
-          ctx.lineWidth = 5;
+          ctx.lineWidth = 6;
 
           // start the line
           ctx.beginPath();
@@ -324,8 +324,12 @@
             }
             drawLine(coord);
             // Add to line for saving
-            // TODO: Only save when the distance is > 3px
-            currentLine.push(coord);
+            // Only save when the distance is > 2px
+            lastPoint = currentLine[currentLine.length-1];
+            xDiff = coord.x - lastPoint.x;
+            yDiff = coord.y - lastPoint.y;
+            if( (xDiff * xDiff + yDiff * yDiff) > 4 )
+                currentLine.push(coord);
           }
           return false;
         };
