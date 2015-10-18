@@ -132,7 +132,7 @@ exports.updateSeed = function (data, cb){
 };
 
 var newRound = function (game, cb) {
-    var drawings = []; // An array of Drawing objects
+    var drawings = {}; // An array of Drawing objects
     // Give every active player two starting doodles
 
     var activePlayers = _.where(game.players, {role:'player', state: "active"});
@@ -167,7 +167,7 @@ var newRound = function (game, cb) {
               submitted: false
           };
           drawingKey = "r" + votingRound + "p" + 2;
-          drawings[drawingKey] = drawing;
+          drawings[drawingKey] = drawing2;
 
           votingRound++;
       }
