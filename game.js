@@ -141,6 +141,7 @@ var newRound = function (game, cb) {
 
     // For every active person in the players
     var votingRound = 0;
+    var drawingKey = "";
     newDrawingSeeds(activePlayers.length, function(roundSeeds){
       for(var p in activePlayers){
           var player = activePlayers[p];
@@ -153,7 +154,8 @@ var newRound = function (game, cb) {
               lines: null,
               submitted: false
           };
-          drawings.push(drawing);
+          drawingKey = "r" + votingRound + "p" + 1;
+          drawings[drawingKey] = drawing;
 
           partnerId = activePlayers[(p+1) % activePlayers.length ].id;
           var drawing2 = {
@@ -164,7 +166,8 @@ var newRound = function (game, cb) {
               lines: null,
               submitted: false
           };
-          drawings.push(drawing2);
+          drawingKey = "r" + votingRound + "p" + 2;
+          drawings[drawingKey] = drawing;
 
           votingRound++;
       }
